@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>/* same styles as before */</style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Appointment Confirmed! 🎉</h1>
+        </div>
+        
+        <div class="content">
+            <p>Dear {{ appointment.customer_name }},</p>
+            <p>Great news! Your appointment with Awinso Hair Care has been confirmed.</p>
+            
+            <div class="details">
+                <h3>Appointment Details</h3>
+                <p><strong>Service:</strong> {{ appointment.service.name }}</p>
+                {% if appointment.subservice %}
+                <p><strong>Option:</strong> {{ appointment.subservice.name }}</p>
+                <p><strong>Price:</strong> ${{ appointment.subservice.price }}</p>
+                {% endif %}
+                <p><strong>Date & Time:</strong> {{ appointment.appointment_date }}</p>
+                <p><strong>Status:</strong> <span style="color: green;">Confirmed ✓</span></p>
+            </div>
+            
+            <div class="details" style="background: #d4edda;">
+                <h3>Important Reminders</h3>
+                <ul>
+                    <li>Please arrive 10 minutes before your appointment time</li>
+                    <li>Bring any reference photos or ideas you have</li>
+                    <li>Cancel at least 24 hours in advance if needed</li>
+                </ul>
+            </div>
+            
+            <p>We look forward to seeing you and making you look fabulous!</p>
+        </div>
+        
+        <div class="footer">
+            <p>Awinso Hair Care<br>[Your Address]<br>[Your Phone Number]</p>
+            <p>Need to reschedule? Contact us at [Your Phone Number]</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Order {{ subservice.name }} - Awinso Hair Care{% endblock %}
+
+{% block content %}
+<div class="container py-5 mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-5">
+                    <h2 class="text-center mb-4">Order {{ subservice.name }}</h2>
+                    
+                    <div class="alert alert-info mb-4">
+                        <h5 class="alert-heading">Product Details</h5>
+                        <p class="mb-1"><strong>Product:</strong> {{ subservice.name }}</p>
+                        <p class="mb-1"><strong>Price:</strong> ${{ subservice.price }}</p>
+                        {% if subservice.duration %}
+                        <p class="mb-0"><strong>Delivery Time:</strong> {{ subservice.duration }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Quantity</label>
+                                    <input type="number" name="quantity" class="form-control" value="1" min="1" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Full Name</label>
+                                    <input type="text" name="customer_name" class="form-control" 
+                                           value="{{ user.get_full_name|default:user.username }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Phone Number</label>
+                                    <input type="tel" name="customer_phone" class="form-control" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Email Address</label>
+                            <input type="email" name="customer_email" class="form-control" 
+                                   value="{{ user.email }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Delivery Address</label>
+                            <textarea name="customer_address" class="form-control" rows="3" required></textarea>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label">Special Instructions (Optional)</label>
+                            <textarea name="notes" class="form-control" rows="2"></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            <i class="fas fa-shopping-cart me-2"></i> Place Order
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

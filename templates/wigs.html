@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ service.name }} - Premium Wigs - Awinso Hair Care{% endblock %}
+
+{% block content %}
+<div class="container py-5 mt-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'salon:index' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'salon:index' %}#services">Services</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ service.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="text-center mb-5">
+        <h1 class="display-5 fw-bold text-dark mb-3">{{ service.name }}</h1>
+        <p class="lead text-muted">Discover our premium collection of high-quality wigs</p>
+    </div>
+
+    <div class="row g-4">
+        {% for wig in wigs %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="position-relative">
+                    {% if wig.image %}
+                    <img src="{{ wig.image.url }}" class="card-img-top" 
+                         alt="{{ wig.name }}" loading="lazy" style="height: 250px; object-fit: cover;">
+                    {% else %}
+                    <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" 
+                         style="height: 250px;">
+                        <i class="fas fa-image fa-3x text-light opacity-50"></i>
+                    </div>
+                    {% endif %}
+                    
+                    {% if wig.stock > 0 %}
+                    <span class="position-absolute top-0 start-0 m-2 badge bg-success">
+                        In Stock: {{ wig.stock }}
+                    </span>
+                    {% else %}
+                    <span class="position-absolute top-0 start-0 m-2 badge bg-danger">
+                        Out of Stock
+                    </span>
+                    {% endif %}
+                    
+                    <span class="position-absolute top-0 end-0 m-2 badge bg-primary">
+                        ${{ wig.price }}
+                    </span>
+                </div>
+                
+                <div class="card-body">
+                    <h3 class="h5 fw-bold card-title">{{ wig.name }}</h3>
+                    <p class="card-text text-muted">{{ wig.description|truncatewords:20 }}</p>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted">Price:</span>
+                        <span class="fw-bold text-primary">${{ wig.price }}</span>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Stock:</span>
+                        <span class="badge bg-{% if wig.stock > 0 %}success{% else %}danger{% endif %}">
+                            {{ wig.stock }} available
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-transparent border-0">
+                    {% if wig.stock > 0 %}
+                    <a href="{% url 'salon:order_wig' wig.id %}" class="btn btn-primary btn-sm w-100">
+                        <i class="fas fa-shopping-cart me-1"></i>
+                        Order Now
+                    </a>
+                    {% else %}
+                    <button class="btn btn-outline-secondary btn-sm w-100" disabled>
+                        <i class="fas fa-ban me-1"></i>
+                        Out of Stock
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                No wigs available at the moment. Please check back later.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

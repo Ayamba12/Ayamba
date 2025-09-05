@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Book Appointment - {{ service.name }} - Awinso Hair Care{% endblock %}
+
+{% block content %}
+<!-- Add this at the top of your form in appointment.html -->
+{% if messages %}
+<div class="alert alert-info">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if form.errors %}
+<div class="alert alert-danger">
+    <strong>Please correct the following errors:</strong>
+    <ul>
+    {% for field in form %}
+        {% for error in field.errors %}
+            <li>{{ field.label }}: {{ error }}</li>
+        {% endfor %}
+    {% endfor %}
+    {% for error in form.non_field_errors %}
+        <li>{{ error }}</li>
+    {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<div class="container py-5 mt-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'salon:index' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'salon:index' %}#services">Services</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Book Appointment</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white py-3">
+                    <h2 class="h5 mb-0">
+                        <i class="fas fa-calendar-plus me-2"></i>
+                        Book Appointment for {{ service.name }}
+                    </h2>
+                </div>
+        <div class="mb-3">
+            <label class="form-label">Payment Method</label><br>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="payment_method" id="cash" value="cash" checked>
+                <label class="form-check-label" for="cash">Cash on Delivery</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="payment_method" id="momo" value="momo">
+                <label class="form-check-label" for="momo">Mobile Money</label>
+            </div>
+        </div>
+        
+                <div class="card-body p-4">
+                    <form method="post" action="{% url 'salon:book_appointment' service.id %}">
+                    {% csrf_token %}
+                        
+                        <div class="row g-3">
+                            <!-- Personal Information -->
+                            <div class="col-md-6">
+                                <label for="id_customer_name" class="form-label fw-bold">
+                                    Full Name <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="id_customer_name" 
+                                       name="customer_name" required maxlength="100"
+                                       placeholder="Enter your full name">
+                                <div class="invalid-feedback">Please provide your name.</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="id_customer_phone" class="form-label fw-bold">
+                                    Phone Number <span class="text-danger">*</span>
+                                </label>
+                                <input type="tel" class="form-control" id="id_customer_phone" 
+                                       name="customer_phone" required maxlength="15"
+                                       placeholder="+1 (555) 123-4567">
+                                <div class="invalid-feedback">Please provide a valid phone number.</div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label for="id_customer_email" class="form-label fw-bold">
+                                    Email Address <span class="text-danger">*</span>
+                                </label>
+                                <input type="email" class="form-control" id="id_customer_email" 
+                                       name="customer_email" required
+                                       placeholder="your.email@example.com">
+                                <div class="invalid-feedback">Please provide a valid email address.</div>
+                            </div>
+
+                            <!-- Hairstyle Selection (for hair services) -->
+                            {% if "hair styling" in service.name.lower or "hair dressing" in service.name.lower %}
+                            <div class="col-md-6">
+                                <label for="id_hairstyle" class="form-label fw-bold">
+                                    Select Hairstyle
+                                </label>
+                                <select class="form-select" id="id_hairstyle" name="hairstyle">
+                                    <option value="">-- Choose a style --</option>
+                                    {% for style in service.hairstyle_set.all %}
+                                    <option value="{{ style.id }}">{{ style.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="id_custom_hairstyle" class="form-label fw-bold">
+                                    Or Describe Custom Style
+                                </label>
+                                <input type="text" class="form-control" id="id_custom_hairstyle" 
+                                       name="custom_hairstyle" maxlength="100"
+                                       placeholder="Describe your desired style">
+                            </div>
+                            {% endif %}
+
+                            <!-- Appointment Date/Time -->
+                            <div class="col-md-6">
+                                <label for="id_appointment_date" class="form-label fw-bold">
+                                    Preferred Date & Time <span class="text-danger">*</span>
+                                </label>
+                                <input type="datetime-local" class="form-control" id="id_appointment_date" 
+                                       name="appointment_date" required
+                                       min="{{ today|date:'Y-m-d' }}T08:00">
+                                <div class="form-text">We're open from 8:00 AM to 8:00 PM</div>
+                                <div class="invalid-feedback">Please select a date and time.</div>
+                            </div>
+
+                            <!-- Additional Notes -->
+                            <div class="col-12">
+                                <label for="id_notes" class="form-label fw-bold">
+                                    Additional Notes
+                                </label>
+                                <textarea class="form-control" id="id_notes" name="notes" 
+                                          rows="4" placeholder="Any special requests or requirements..."></textarea>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary btn-lg w-100 py-3">
+                                    <i class="fas fa-paper-plane me-2"></i>
+                                    Request Appointment
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Service Summary -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3">Service Summary</h5>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted">Service:</span>
+                        <span class="fw-bold">{{ service.name }}</span>
+                    </div>
+                    {% if service.price %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted">Price:</span>
+                        <span class="fw-bold text-primary">${{ service.price }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Duration:</span>
+                        <span class="fw-bold">{{ service.duration }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('appointmentForm');
+    
+    // Form validation
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+
+    // Set min date/time for appointment
+    const now = new Date();
+    const minDate = now.toISOString().slice(0, 16);
+    document.getElementById('id_appointment_date').min = minDate;
+});
+</script>
+{% endblock %}

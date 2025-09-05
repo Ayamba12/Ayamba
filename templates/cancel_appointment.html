@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Cancel Appointment - Awinso Hair Care{% endblock %}
+
+{% block content %}
+<div class="container py-5 mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-5">
+                    <h2 class="text-center mb-4">Cancel Appointment</h2>
+                    
+                    <div class="alert alert-warning">
+                        <h5>Are you sure you want to cancel this appointment?</h5>
+                        <p class="mb-0"><strong>Service:</strong> {{ appointment.service.name }}</p>
+                        <p class="mb-0"><strong>Date & Time:</strong> {{ appointment.appointment_date }}</p>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="reason" class="form-label">Reason for cancellation (optional)</label>
+                            <textarea class="form-control" id="reason" name="reason" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                            <a href="{% url 'salon:appointment_detail' appointment.id %}" class="btn btn-secondary me-md-2">Go Back</a>
+                            <button type="submit" class="btn btn-danger">Confirm Cancellation</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

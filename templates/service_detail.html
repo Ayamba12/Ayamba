@@ -1,0 +1,128 @@
+<!-- templates/service_detail.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ service.name }} - Awinso Hair Care{% endblock %}
+
+{% block content %}
+<div class="container py-5 mt-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'salon:index' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'salon:index' %}#services">Services</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ service.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-5">
+                    <!-- Service Header -->
+                    <div class="text-center mb-4">
+                        <i class="fas fa-{% if 'style' in service.name.lower %}cut{% elif 'wig' in service.name.lower %}user-alt{% else %}spa{% endif %} fa-4x text-primary mb-3"></i>
+                        <h1 class="h2 fw-bold text-dark">{{ service.name }}</h1>
+                        <p class="lead text-muted">{{ service.description }}</p>
+                    </div>
+
+                    <!-- DEBUG: Show service info -->
+                    <div class="alert alert-info d-none"> <!-- Add d-none to hide after debugging -->
+                        <strong>Debug Info:</strong>
+                        Service: {{ service.name }} (ID: {{ service.id }})<br>
+                        Subservices: {{ subservices.count }}<br>
+                        Subservices exists: {% if subservices %}Yes{% else %}No{% endif %}
+                    </div>
+
+                    <!-- Subservices Section -->
+                    {% if subservices %}
+                    <div class="subservices-section mb-5">
+                        <h3 class="h5 fw-bold mb-4 text-center">Service Options</h3>
+                        <div class="row">
+                            {% for subservice in subservices %}
+                            <div class="col-md-6 mb-4">
+                                <div class="card h-100 shadow-sm border-0">
+                                    <!-- SubService Image -->
+                                    {% if subservice.image %}
+                                    <img src="{{ subservice.image.url }}" class="card-img-top" alt="{{ subservice.name }}" style="height: 200px; object-fit: cover;">
+                                    {% else %}
+                                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                        <i class="fas fa-image fa-3x text-muted"></i>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title fw-bold">{{ subservice.name }}</h5>
+                                        <p class="card-text text-muted">{{ subservice.description }}</p>
+                                        
+                                        <!-- Price + Duration for SubService -->
+                                        <div class="subservice-details mb-3">
+                                            <div class="d-inline-block mx-2">
+                                                <span class="fw-bold text-primary fs-5">${{ subservice.price }}</span>
+                                                <br>
+                                                <small class="text-muted">Price</small>
+                                            </div>
+                                            
+                                            <div class="d-inline-block mx-2">
+                                                <span class="fw-bold text-dark fs-6">{{ subservice.duration }}</span>
+                                                <br>
+                                                <small class="text-muted">Duration</small>
+                                            </div>
+                                        </div>
+                                        
+                                        {% if user.is_authenticated %}
+                                        <a href="{% url 'salon:book_appointment' service.id %}?subservice_id={{ subservice.id }}" 
+                                           class="btn btn-outline-primary btn-sm">
+                                           Select Option
+                                        </a>
+                                        {% else %}
+                                        <div class="alert alert-info py-1">
+                                            <small>Please <a href="{% url 'login' %}">login</a> to book</small>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <!-- Show this if no subservices -->
+                    <div class="alert alert-warning text-center">
+                        <h5>No Service Options Available</h5>
+                        <p>There are no options currently available for this service.</p>
+                        {% if user.is_superuser %}
+                        <a href="/admin/salon/subservice/add/" class="btn btn-sm btn-outline-primary">
+                            Add SubService in Admin
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Book Service Button -->
+                    <div class="text-center mt-4 mb-5">
+                        {% if subservices %}
+                        <p class="text-muted mb-3">Select an option above to book</p>
+                        {% else %}
+                        <a href="{% url 'salon:book_appointment' service.id %}?subservice_id={{ subservice.id }}" 
+                            class="btn btn-primary btn-sm">
+                            <i class="fas fa-calendar-check me-1"></i> Book Appointment
+                        </a>
+                        {% endif %}
+                    </div>
+
+                    <!-- What to Expect -->
+                    <div class="mt-5">
+                        <h3 class="h5 fw-bold mb-3">What to Expect</h3>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Professional consultation</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Quality products</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Expert styling</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Satisfaction guaranteed</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

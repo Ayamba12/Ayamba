@@ -1,0 +1,14 @@
+<!-- salon/templates/salon/view_order.html -->
+{% extends "base.html" %}
+
+{% block title %}Order Details{% endblock %}
+
+{% block content %}
+<h2>Order Details</h2>
+<p><strong>Customer:</strong> {{ order.customer_name }}</p>
+<p><strong>Product:</strong> {{ order.product_name }}</p>
+<p><strong>Quantity:</strong> {{ order.quantity }}</p>
+<p><strong>Total Price:</strong> {{ order.total_price }}</p>
+<p><strong>Address:</strong> {{ order.customer_address }}</p>
+<p><strong>Payment:</strong> {{ order.payment_method }} ({{ order.payment_status }})</p>
+{% endblock %}

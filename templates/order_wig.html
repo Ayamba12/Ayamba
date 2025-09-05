@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Order {{ wig.name }} - Awinso Hair Care{% endblock %}
+
+{% block content %}
+<div class="container py-5 mt-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'salon:index' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'salon:index' %}#services">Services</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'salon:service_detail' wig.service.id %}">Wigs</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Order {{ wig.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Product Summary -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="row g-0">
+                    <div class="col-md-4">
+                        {% if wig.image %}
+                        <img src="{{ wig.image.url }}" class="img-fluid rounded-start h-100 object-fit-cover" 
+                             alt="{{ wig.name }}" loading="lazy">
+                        {% else %}
+                        <div class="bg-secondary h-100 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-image fa-3x text-light opacity-50"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card-body">
+                            <h2 class="h4 fw-bold card-title">{{ wig.name }}</h2>
+                            <p class="card-text text-muted">{{ wig.description }}</p>
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-muted">Price:</span>
+                                <span class="fw-bold text-primary fs-5">${{ wig.price }}</span>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="text-muted">In Stock:</span>
+                                <span class="badge bg-{% if wig.stock > 0 %}success{% else %}danger{% endif %} fs-6">
+                                    {{ wig.stock }} available
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Form -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white py-3">
+                    <h3 class="h5 mb-0">
+                        <i class="fas fa-shopping-cart me-2"></i>
+                        Order Details
+                    </h3>
+                </div>
+                
+                <div class="card-body p-4">
+                    <form method="post" id="orderForm" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row g-3">
+                            <!-- Personal Information -->
+                            <div class="col-md-6">
+                                <label for="id_customer_name" class="form-label fw-bold">
+                                    Full Name <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="id_customer_name" 
+                                       name="customer_name" required maxlength="100"
+                                       placeholder="Enter your full name">
+                                <div class="invalid-feedback">Please provide your name.</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="id_customer_phone" class="form-label fw-bold">
+                                    Phone Number <span class="text-danger">*</span>
+                                </label>
+                                <input type="tel" class="form-control" id="id_customer_phone" 
+                                       name="customer_phone" required maxlength="15"
+                                       placeholder="+1 (555) 123-4567">
+                                <div class="invalid-feedback">Please provide a valid phone number.</div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label for="id_customer_email" class="form-label fw-bold">
+                                    Email Address <span class="text-danger">*</span>
+                                </label>
+                                <input type="email" class="form-control" id="id_customer_email" 
+                                       name="customer_email" required
+                                       placeholder="your.email@example.com">
+                                <div class="invalid-feedback">Please provide a valid email address.</div>
+                            </div>
+
+                            <!-- Shipping Address -->
+                            <div class="col-12">
+                                <label for="id_customer_address" class="form-label fw-bold">
+                                    Delivery Address <span class="text-danger">*</span>
+                                </label>
+                                <textarea class="form-control" id="id_customer_address" 
+                                          name="customer_address" required rows="3"
+                                          placeholder="Enter your complete delivery address"></textarea>
+                                <div class="invalid-feedback">Please provide your delivery address.</div>
+                            </div>
+
+                            <!-- Quantity -->
+                            <div class="col-md-6">
+                                <label for="id_quantity" class="form-label fw-bold">
+                                    Quantity <span class="text-danger">*</span>
+                                </label>
+                                <input type="number" class="form-control" id="id_quantity" 
+                                       name="quantity" required min="1" max="{{ wig.stock }}" 
+                                       value="1">
+                                <div class="form-text">Maximum {{ wig.stock }} available</div>
+                                <div class="invalid-feedback">Please select a valid quantity.</div>
+                            </div>
+
+                            <!-- Total Price Preview -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Total Amount</label>
+                                <div class="form-control bg-light">
+                                    <span id="totalPrice" class="fw-bold text-primary">${{ wig.price }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Payment Method -->
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <h6 class="alert-heading">
+                                        <i class="fas fa-mobile-alt me-2"></i>Mobile Money Payment
+                                    </h6>
+                                    <p class="mb-0">You will receive payment instructions via SMS/Email after placing your order.</p>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary btn-lg w-100 py-3" 
+                                        {% if wig.stock == 0 %}disabled{% endif %}>
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    {% if wig.stock > 0 %}
+                                    Place Order - $<span id="submitTotal">{{ wig.price }}</span>
+                                    {% else %}
+                                    Out of Stock
+                                    {% endif %}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('orderForm');
+    const quantityInput = document.getElementById('id_quantity');
+    const totalPriceElement = document.getElementById('totalPrice');
+    const submitTotalElement = document.getElementById('submitTotal');
+    const wigPrice = { wig,price }
+
+    // Form validation
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+
+    // Calculate total price
+    function updateTotalPrice() {
+        const quantity = parseInt(quantityInput.value) || 1;
+        const total = wigPrice * quantity;
+        totalPriceElement.textContent = '$' + total.toFixed(2);
+        if (submitTotalElement) {
+            submitTotalElement.textContent = total.toFixed(2);
+        }
+    }
+
+    quantityInput.addEventListener('input', updateTotalPrice);
+    quantityInput.addEventListener('change', updateTotalPrice);
+
+    // Initial calculation
+    updateTotalPrice();
+});
+</script>
+{% endblock %}

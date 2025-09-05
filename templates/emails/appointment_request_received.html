@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>/* same styles as before */</style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Appointment Request Received</h1>
+        </div>
+        
+        <div class="content">
+            <p>Dear {{ appointment.customer_name }},</p>
+            <p>Thank you for booking with Awinso Hair Care! We've received your appointment request.</p>
+            
+            <div class="details">
+                <h3>Your Appointment Request</h3>
+                <p><strong>Service:</strong> {{ appointment.service.name }}</p>
+                {% if appointment.subservice %}
+                <p><strong>Option:</strong> {{ appointment.subservice.name }}</p>
+                <p><strong>Price:</strong> ${{ appointment.subservice.price }}</p>
+                {% endif %}
+                <p><strong>Requested Date & Time:</strong> {{ appointment.appointment_date }}</p>
+                <p><strong>Status:</strong> <span style="color: orange;">Pending Confirmation</span></p>
+            </div>
+            
+            <p><strong>Please Note:</strong> This is a request, not a confirmed appointment. We will review your request and contact you shortly to confirm availability.</p>
+            
+            <p>If you need to make any changes or have questions, please contact us at [Your Phone Number].</p>
+            
+            <p>We look forward to serving you!</p>
+        </div>
+        
+        <div class="footer">
+            <p>Awinso Hair Care<br>[Your Address]<br>[Your Phone Number]</p>
+        </div>
+    </div>
+</body>
+</html>

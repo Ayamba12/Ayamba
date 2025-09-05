@@ -1,0 +1,123 @@
+<!-- templates/index.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section bg-gradient-primary text-white py-5">
+    <div class="container py-5">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">Transform Your Look with Awinso Hair Care</h1>
+                <p class="lead mb-4">Experience premium hair services and quality products. Your beauty journey starts here.</p>
+                <a href="#services" class="btn btn-light btn-lg px-4 py-2">
+                    <i class="fas fa-spa me-2"></i>Explore Our Offerings
+                </a>
+            </div>
+            <div class="col-lg-6 text-center">
+                <img src="{% static 'images/beauty-salon.png' %}" alt="Professional Beauty Services" 
+                     class="img-fluid rounded shadow" loading="lazy">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Booking Services Section -->
+<section id="services" class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center mb-5">
+                <h2 class="display-5 fw-bold">Our Services</h2>
+                <p class="lead text-muted">Professional beauty services and treatments</p>
+            </div>
+        </div>
+        
+        <div class="row">
+            {% for service in booking_services %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body text-center p-4">
+                        <i class="fas fa-{% if 'hair' in service.name.lower %}cut{% elif 'nail' in service.name.lower %}hand-sparkles{% else %}spa{% endif %} fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title fw-bold">{{ service.name }}</h5>
+                        <p class="card-text text-muted">{{ service.description|truncatewords:15 }}</p>
+                        <a href="{% url 'salon:service_detail' service.id %}" class="btn btn-outline-primary">
+                            View Services <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center">
+                <p class="text-muted">No booking services available at the moment.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Products Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center mb-5">
+                <h2 class="display-5 fw-bold">Our Products</h2>
+                <p class="lead text-muted">Quality beauty products and appliances</p>
+            </div>
+        </div>
+        
+        <div class="row">
+            {% for service in order_services %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body text-center p-4">
+                        <i class="fas fa-{% if 'wig' in service.name.lower %}user-alt{% elif 'appliance' in service.name.lower %}blender{% else %}shopping-bag{% endif %} fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title fw-bold">{{ service.name }}</h5>
+                        <p class="card-text text-muted">{{ service.description|truncatewords:15 }}</p>
+                        <a href="{% url 'salon:service_detail' service.id %}" class="btn btn-outline-primary">
+                            View Products <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center">
+                <p class="text-muted">No products available at the moment.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Wigs Section (if you have standalone wigs) -->
+{% if wigs %}
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center mb-5">
+                <h2 class="display-5 fw-bold">Premium Wigs</h2>
+                <p class="lead text-muted">High-quality wigs for every style</p>
+            </div>
+        </div>
+        <div class="row">
+            {% for wig in wigs %}
+            <div class="col-md-3 mb-4">
+                <div class="card h-100 shadow-sm border-0">
+                    {% if wig.image %}
+                    <img src="{{ wig.image.url }}" class="card-img-top" alt="{{ wig.name }}">
+                    {% endif %}
+                    <div class="card-body text-center">
+                        <h5 class="card-title fw-bold">{{ wig.name }}</h5>
+                        <p class="card-text text-muted">{{ wig.description|truncatewords:10 }}</p>
+                        <p class="fw-bold text-primary">${{ wig.price }}</p>
+                        <a href="{% url 'salon:order_wig' wig.id %}" class="btn btn-outline-primary btn-sm">
+                            Order Now
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

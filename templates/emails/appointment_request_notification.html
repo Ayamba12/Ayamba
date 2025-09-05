@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>/* same styles as before */</style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>New Appointment Request - Action Required</h1>
+        </div>
+        
+        <div class="content">
+            <p>Hello, you have a new appointment request that needs confirmation:</p>
+            
+            <div class="details">
+                <h3>Appointment Details</h3>
+                <p><strong>Service:</strong> {{ appointment.service.name }}</p>
+                {% if appointment.subservice %}
+                <p><strong>Option:</strong> {{ appointment.subservice.name }}</p>
+                <p><strong>Price:</strong> ${{ appointment.subservice.price }}</p>
+                {% endif %}
+                <p><strong>Date & Time:</strong> {{ appointment.appointment_date }}</p>
+                <p><strong>Status:</strong> <span style="color: orange;">Pending Confirmation</span></p>
+            </div>
+            
+            <div class="details">
+                <h3>Customer Information</h3>
+                <p><strong>Name:</strong> {{ appointment.customer_name }}</p>
+                <p><strong>Phone:</strong> {{ appointment.customer_phone }}</p>
+                <p><strong>Email:</strong> {{ appointment.customer_email }}</p>
+            </div>
+            
+            <p style="background: #fff3cd; padding: 15px; border-radius: 5px;">
+                <strong>Action Required:</strong> Please log in to the admin panel to confirm or decline this appointment.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
