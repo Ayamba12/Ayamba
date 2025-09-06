@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Payment Confirmed</title>
+</head>
+<body>
+    <h2>Payment Confirmed</h2>
+    <p>Dear {{ appointment.customer_name }},</p>
+    
+    <p>Your payment for the following appointment has been confirmed:</p>
+    
+    <ul>
+        <li><strong>Service:</strong> {{ appointment.service.name }}</li>
+        <li><strong>Date & Time:</strong> {{ appointment.appointment_date }}</li>
+        <li><strong>Payment Method:</strong> {{ appointment.get_payment_method_display }}</li>
+    </ul>
+    
+    <p>Thank you for your payment. We look forward to serving you!</p>
+    
+    <p>Best regards,<br>Your Salon Team</p>
+</body>
+</html>

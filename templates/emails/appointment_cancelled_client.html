@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Appointment Cancellation Confirmation</title>
+</head>
+<body>
+    <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
+        <h2 style="color: #6c757d;">Cancellation Confirmation</h2>
+        
+        <p>Dear {{ appointment.customer_name }},</p>
+        
+        <p>This email confirms that your appointment has been cancelled as requested.</p>
+        
+        <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #6c757d; margin: 20px 0;">
+            <h3 style="margin-top: 0;">Cancelled Appointment Details:</h3>
+            <p><strong>Service:</strong> {{ appointment.service.name }}</p>
+            <p><strong>Date & Time:</strong> {{ appointment.appointment_date|date:"F j, Y, g:i a" }}</p>
+            {% if appointment.subservice %}
+            <p><strong>Subservice:</strong> {{ appointment.subservice.name }}</p>
+            {% endif %}
+        </div>
+        
+        <div style="background-color: #e9ecef; padding: 15px; border-left: 4px solid #6c757d; margin: 20px 0;">
+            <h3 style="margin-top: 0;">Your Cancellation Reason:</h3>
+            <p>{{ reason }}</p>
+        </div>
+        
+        <p>We're sorry to see you go! If you'd like to reschedule or book a different service, 
+           we'd be happy to help you find a convenient time.</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{ protocol }}://{{ domain }}{% url 'salon:service_list' %}" 
+               style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px;">
+                Book Another Appointment
+            </a>
+        </div>
+        
+        <p>Thank you for considering Awinso Hair Care. We hope to serve you in the future!</p>
+        
+        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+        
+        <p style="color: #6c757d; font-size: 14px;">
+            Best regards,<br>
+            <strong>Awinso Hair Care Team</strong><br>
+            Phone: [Your Phone Number]<br>
+            Email: [Your Email Address]<br>
+            Address: [Your Business Address]
+        </p>
+    </div>
+</body>
+</html>

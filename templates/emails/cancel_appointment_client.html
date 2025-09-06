@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Cancel Appointment - Awinso Hair Care{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">Cancel Appointment</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Please note:</strong> Cancelling an appointment frees up the time slot for other clients. 
+                        Please provide a reason for cancellation to help us improve our service.
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5>Appointment Details</h5>
+                            <p><strong>Service:</strong> {{ appointment.service.name }}</p>
+                            <p><strong>Date & Time:</strong> {{ appointment.appointment_date|date:"F j, Y, g:i a" }}</p>
+                            {% if appointment.subservice %}
+                            <p><strong>Subservice:</strong> {{ appointment.subservice.name }}</p>
+                            {% endif %}
+                            <p><strong>Status:</strong> <span class="badge bg-info">{{ appointment.status|title }}</span></p>
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label for="reason" class="form-label fw-bold">
+                                Why are you cancelling this appointment? *
+                            </label>
+                            <textarea class="form-control" id="reason" name="reason" rows="5" 
+                                      placeholder="Please let us know why you need to cancel (e.g., schedule conflict, emergency, found another provider, etc.)"
+                                      required></textarea>
+                            <div class="form-text">Your feedback helps us improve our service.</div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'salon:appointment_list' %}" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-arrow-left me-1"></i> Go Back
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-times me-1"></i> Confirm Cancellation
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

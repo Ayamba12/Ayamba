@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Our Services - Awinso Hair Care{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h2 class="text-center mb-5">Our Services</h2>
+    
+    <!-- Booking Services -->
+    {% if booking_services %}
+    <div class="row mb-5">
+        <div class="col-12">
+            <h3 class="mb-4">Booking Services</h3>
+        </div>
+        {% for service in booking_services %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                {% if service.image %}
+                <img src="{{ service.image.url }}" class="card-img-top" alt="{{ service.name }}">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ service.name }}</h5>
+                    <p class="card-text">{{ service.description|truncatewords:20 }}</p>
+                    <p class="fw-bold">GHS {{ service.price }}</p>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{% url 'salon:service_detail' service.id %}" class="btn btn-primary w-100">
+                        View Details & Book
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Product Services -->
+    {% if product_services %}
+    <div class="row">
+        <div class="col-12">
+            <h3 class="mb-4">Products & Packages</h3>
+        </div>
+        {% for service in product_services %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                {% if service.image %}
+                <img src="{{ service.image.url }}" class="card-img-top" alt="{{ service.name }}">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ service.name }}</h5>
+                    <p class="card-text">{{ service.description|truncatewords:20 }}</p>
+                    <p class="fw-bold">GHS {{ service.price }}</p>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{% url 'salon:service_detail' service.id %}" class="btn btn-primary w-100">
+                        View Products
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

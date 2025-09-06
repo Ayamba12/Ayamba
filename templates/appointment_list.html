@@ -4,60 +4,63 @@
 {% block title %}My Appointments - Awinso Hair Care{% endblock %}
 
 {% block content %}
-<div class="container py-5 mt-4">
-    <div class="row">
-        <div class="col-12">
-            <h1 class="mb-4">My Appointments</h1>
-            
-            {% if appointments %}
-            <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Service</th>
-                            <th>Date & Time</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for appointment in appointments %}
-                        <tr>
-                            <td>
-                                <strong>{{ appointment.service.name }}</strong>
-                                {% if appointment.subservice %}
-                                <br><small>{{ appointment.subservice.name }}</small>
-                                {% endif %}
-                            </td>
-                            <td>{{ appointment.appointment_date }}</td>
-                            <td>
-                                <span class="badge bg-{% if appointment.status == 'confirmed' %}success{% elif appointment.status == 'pending' %}warning{% else %}danger{% endif %}">
-                                    {{ appointment.status|title }}
-                                </span>
-                            </td>
-                            <td>
-                                <a href="{% url 'salon:appointment_detail' appointment.id %}" class="btn btn-sm btn-info">View</a>
-                                {% if appointment.status == 'pending' or appointment.status == 'confirmed' %}
-                                <a href="{% url 'salon:cancel_appointment' appointment.id %}" class="btn btn-sm btn-danger">Cancel</a>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <div class="alert alert-info">
-                <p class="mb-0">You don't have any appointments yet.</p>
-            </div>
-            {% endif %}
-            
-            <div class="mt-4">
-                <a href="{% url 'salon:index' %}#services" class="btn btn-primary">
-                    Book New Appointment
-                </a>
-            </div>
-        </div>
+<div class="container py-5">
+    <h2 class="mb-4">My Appointments</h2>
+    
+    {% if appointments %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Service</th>
+                    <th>Date & Time</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for appointment in appointments %}
+                <tr>
+                    <td>{{ appointment.service.name }}</td>
+                    <td>{{ appointment.appointment_date|date:"M j, Y, g:i A" }}</td>
+                    <td>
+                        <span class="badge 
+                            {% if appointment.status == 'confirmed' %}bg-success
+                            {% elif appointment.status == 'pending' %}bg-warning
+                            {% elif appointment.status == 'cancelled' %}bg-danger
+                            {% elif appointment.status == 'paid' %}bg-info
+                            {% else %}bg-secondary{% endif %}">
+                            {{ appointment.status|title }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'salon:appointment_detail' appointment.id %}" 
+                           class="btn btn-sm btn-info">
+                            <i class="fas fa-eye"></i> Details
+                        </a>
+                        
+                        {% if appointment.status == 'pending' or appointment.status == 'confirmed' %}
+                        <a href="{% url 'salon:cancel_appointment_client' appointment.id %}" 
+                        class="btn btn-sm btn-danger">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                        {% endif %}
+                        
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+        <h4>No appointments found</h4>
+        <p class="text-muted">You haven't booked any appointments yet.</p>
+        <a href="{% url 'salon:service_list' %}" class="btn btn-primary">
+            Book an Appointment
+        </a>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

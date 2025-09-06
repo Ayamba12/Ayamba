@@ -11,20 +11,30 @@ urlpatterns = [
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path("availability/<int:service_id>/", views.check_availability, name="check_availability"),
 
+     # Product Order URLs
+    path('confirm-product-order/<int:order_id>/', views.confirm_product_order, name='confirm_product_order'),
+    path('cancel-product-order/<int:order_id>/', views.cancel_product_order, name='cancel_product_order'),
+    path('cancel-appointment-client/<int:appointment_id>/', views.cancel_appointment_client, name='cancel_appointment_client'),
+
     # Service-related URLs
     path('services/<int:service_id>/', views.service_detail, name='service_detail'),
     path('services/<int:service_id>/delete/', views.delete_service, name='delete_service'),
+    path('services/', views.service_list, name='service_list'),
+
 
     path('order/product/<int:service_id>/<int:subservice_id>/', views.order_product, name='order_product'),
     path('order/<int:order_id>/', views.view_order, name='view_order'),
-    path('confirm-payment/<str:order_type>/<int:order_id>/', views.confirm_payment, name='confirm_payment'),
-
     # Appointment URLs
     path('book/<int:service_id>/', views.book_appointment, name='book_appointment'),
     path('appointments/', views.appointment_list, name='appointment_list'),
     path('appointments/<int:appointment_id>/', views.appointment_detail, name='appointment_detail'),
-    path('appointments/<int:appointment_id>/confirm/', views.confirm_appointment, name='confirm_appointment'),
     path('appointments/<int:appointment_id>/cancel/', views.cancel_appointment, name='cancel_appointment'),
+    path("confirm-appointment/<int:appointment_id>/", views.confirm_appointment, name="confirm_appointment"),
+
+    path('confirm-payment/<str:order_type>/<int:order_id>/', views.confirm_product_payment, name='confirm_product_payment'),
+
+# For appointment payments
+     path("confirm-appointment-payment/<int:appointment_id>/", views.confirm_appointment_payment, name="confirm_appointment_payment"),
 
     # Wig URLs
     path('wig/<int:wig_id>/order/', views.order_wig, name='order_wig'),

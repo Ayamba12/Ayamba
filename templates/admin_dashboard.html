@@ -5,68 +5,50 @@
 
 {% block extra_head %}
 <style>
-.dashboard-stat {
-    transition: transform 0.3s ease;
-}
-.dashboard-stat:hover {
-    transform: translateY(-3px);
-}
+.dashboard-stat { transition: transform 0.3s ease; }
+.dashboard-stat:hover { transform: translateY(-3px); }
+.btn:disabled { cursor: not-allowed; opacity: 0.65; }
+.order-actions { white-space: nowrap; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4 mt-5">
-    <!-- Dashboard Header -->
     <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <h1 class="h3 fw-bold text-dark">
-                    <i class="fas fa-tachometer-alt me-2"></i>Admin Dashboard
-                </h1>
-                <span class="badge bg-primary fs-6">
-                    <i class="fas fa-user me-1"></i>Welcome, {{ user.username }}
-                </span>
-            </div>
-            <hr>
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <h1 class="h3 fw-bold text-dark"><i class="fas fa-tachometer-alt me-2"></i>Admin Dashboard</h1>
+            <span class="badge bg-primary fs-6"><i class="fas fa-user me-1"></i>Welcome, {{ user.username }}</span>
         </div>
     </div>
 
     <!-- Statistics Cards -->
     <div class="row g-4 mb-5">
         <div class="col-md-6 col-lg-3">
-            <div class="card dashboard-stat border-0 shadow-sm bg-primary text-white">
-                <div class="card-body text-center p-4">
-                    <i class="fas fa-calendar-check fa-3x mb-3"></i>
-                    <h3 class="h2 fw-bold">{{ appointments.count }}</h3>
-                    <p class="mb-0">Total Appointments</p>
-                </div>
+            <div class="card dashboard-stat border-0 shadow-sm bg-primary text-white text-center p-4">
+                <i class="fas fa-calendar-check fa-3x mb-3"></i>
+                <h3 class="h2 fw-bold">{{ appointments.count }}</h3>
+                <p class="mb-0">Total Appointments</p>
             </div>
         </div>
         <div class="col-md-6 col-lg-3">
-            <div class="card dashboard-stat border-0 shadow-sm bg-success text-white">
-                <div class="card-body text-center p-4">
-                    <i class="fas fa-shopping-cart fa-3x mb-3"></i>
-                    <h3 class="h2 fw-bold">{{ orders.count }}</h3>
-                    <p class="mb-0">Total Orders</p>
-                </div>
+            <div class="card dashboard-stat border-0 shadow-sm bg-success text-white text-center p-4">
+                <i class="fas fa-shopping-cart fa-3x mb-3"></i>
+                <h3 class="h2 fw-bold">{{ orders.count }}</h3>
+                <p class="mb-0">Total Orders</p>
             </div>
         </div>
         <div class="col-md-6 col-lg-3">
-            <div class="card dashboard-stat border-0 shadow-sm bg-info text-white">
-                <div class="card-body text-center p-4">
-                    <i class="fas fa-spa fa-3x mb-3"></i>
-                    <h3 class="h2 fw-bold">{{ services.count }}</h3>
-                    <p class="mb-0">Active Services</p>
-                </div>
+            <div class="card dashboard-stat border-0 shadow-sm bg-info text-white text-center p-4">
+                <i class="fas fa-spa fa-3x mb-3"></i>
+                <h3 class="h2 fw-bold">{{ services.count }}</h3>
+                <p class="mb-0">Active Services</p>
             </div>
         </div>
         <div class="col-md-6 col-lg-3">
-            <div class="card dashboard-stat border-0 shadow-sm bg-warning text-dark">
-                <div class="card-body text-center p-4">
-                    <i class="fas fa-user-alt fa-3x mb-3"></i>
-                    <h3 class="h2 fw-bold">{{ wigs.count }}</h3>
-                    <p class="mb-0">Wig Products</p>
-                </div>
+            <div class="card dashboard-stat border-0 shadow-sm bg-warning text-dark text-center p-4">
+                <i class="fas fa-user-alt fa-3x mb-3"></i>
+                <h3 class="h2 fw-bold">{{ wigs.count }}</h3>
+                <p class="mb-0">Wig Products</p>
             </div>
         </div>
     </div>
@@ -74,24 +56,20 @@
     <!-- Dynamic Service Tabs -->
     <ul class="nav nav-tabs" id="adminTabs" role="tablist">
         {% for entry in service_data %}
-        <li class="nav-item" role="presentation">
+        <li class="nav-item">
             <button class="nav-link {% if forloop.first %}active{% endif %}" 
-                    id="service-{{ entry.service.id }}-tab"
                     data-bs-toggle="tab" 
-                    data-bs-target="#service-{{ entry.service.id }}" 
-                    type="button" role="tab">
+                    data-bs-target="#service-{{ entry.service.id }}">
                 <i class="fas fa-spa me-1"></i>{{ entry.service.name }}
             </button>
         </li>
         {% endfor %}
     </ul>
 
-    <div class="tab-content" id="adminTabsContent">
+    <div class="tab-content mt-3">
         {% for entry in service_data %}
-        <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" 
-             id="service-{{ entry.service.id }}" role="tabpanel">
-
-            <div class="card border-0 shadow-sm mt-3">
+        <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" id="service-{{ entry.service.id }}">
+            <div class="card border-0 shadow-sm">
                 <div class="card-header bg-light d-flex justify-content-between">
                     <h5 class="mb-0">{{ entry.service.name }} Management</h5>
                     <span class="badge bg-primary">{{ entry.items|length }} total</span>
@@ -104,16 +82,25 @@
                             <thead class="table-dark">
                                 <tr>
                                     <th>Customer</th>
+                                    <th>Subservice</th>
                                     <th>Date/Time</th>
                                     <th>Status</th>
                                     <th>Payment</th>
+                                    <th>Amount</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for item in entry.items %}
-                                <tr>
+                                <tr id="row-{{ item.id }}">
                                     <td>{{ item.customer_name }}</td>
+                                    <td>
+                                        {% if item.subservice %}
+                                            {{ item.subservice.name }}
+                                        {% else %}
+                                            {{ item.service.name }}
+                                        {% endif %}
+                                    </td>
                                     <td>
                                         {% if item.appointment_date %}
                                             {{ item.appointment_date|date:"M d, Y H:i" }}
@@ -121,49 +108,66 @@
                                             {{ item.order_date|date:"M d, Y H:i" }}
                                         {% endif %}
                                     </td>
-                                    <td>{{ item.status|title }}</td>
-                                    <td>
-                                        {% if item.payment_method %}
-                                            {{ item.payment_method }} ({{ item.payment_status }})
-                                        {% elif item.payment_confirmed %}
-                                            Confirmed
+                                    <td id="status-{{ item.id }}">
+                                        {% if item.status == 'paid' %}
+                                            <span class="badge bg-success">Paid</span>
+                                        {% elif item.status == 'confirmed' %}
+                                            <span class="badge bg-info">Confirmed</span>
+                                        {% elif item.status == 'pending' %}
+                                            <span class="badge bg-warning">Pending</span>
+                                        {% elif item.status == 'cancelled' %}
+                                            <span class="badge bg-danger">Cancelled</span>
                                         {% else %}
-                                            Pending
+                                            {{ item.status|title }}
+                                        {% endif %}
+                                    </td>
+                                    <td id="payment-{{ item.id }}">
+                                        {% if item.payment_method %}
+                                            {{ item.payment_method|title }}
+                                            {% if item.payment_status %}
+                                                ({{ item.payment_status|title }})
+                                            {% endif %}
+                                        {% elif item.payment_confirmed %}
+                                            <span class="badge bg-success">Confirmed</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Pending</span>
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <!-- Conditional Actions -->
                                         {% if entry.service.service_type == "booking" %}
-                                            <form method="post" action="{% url 'salon:confirm_appointment' item.id %}" style="display:inline;">
-                                                {% csrf_token %}
-                                                <button class="btn btn-success btn-sm">Confirm</button>
-                                            </form>
-                                            <form method="post" action="{% url 'salon:cancel_appointment' item.id %}" style="display:inline;">
-                                                {% csrf_token %}
-                                                <button class="btn btn-danger btn-sm">Cancel</button>
-                                            </form>
-                                        {% elif entry.service.service_type == "wig" %}
-                                            <a href="{% url 'salon:view_wig_order' item.id %}" class="btn btn-info btn-sm">View</a>
-                                            {% if item.payment_method == "momo" %}
-                                            <form method="post" action="{% url 'salon:confirm_payment' 'wig' item.id %}" style="display:inline;">
-                                                {% csrf_token %}
-                                                <button class="btn btn-warning btn-sm"
-                                                        {% if item.payment_confirmed %} disabled {% endif %}>
-                                                    {% if item.payment_confirmed %}Payment Confirmed{% else %}Confirm Payment{% endif %}
-                                                </button>
-                                            </form>
+                                            {% if item.status != "confirmed" %}
+                                            <button type="button" class="btn btn-sm btn-primary ajax-btn" 
+                                                    data-url="{% url 'salon:confirm_appointment' item.id %}" 
+                                                    data-target="#status-{{ item.id }}">
+                                                Confirm Appointment
+                                            </button>
                                             {% endif %}
-                                        {% else %}
-                                            <a href="{% url 'salon:view_order' item.id %}" class="btn btn-info btn-sm">View</a>
-                                            {% if item.payment_method == "momo" and not item.payment_confirmed %}
-                                                <button class="btn btn-warning btn-sm confirm-payment-btn"
-                                                        data-order-type="product"
-                                                        data-order-id="{{ item.id }}">
-                                                    Confirm Payment
-                                                </button>
-                                            {% elif item.payment_confirmed %}
-                                                <button class="btn btn-success btn-sm" disabled>Payment Confirmed</button>
+                                            {% if item.payment_status != "paid" %}
+                                            <button type="button" class="btn btn-sm btn-success ajax-btn" 
+                                                    data-url="{% url 'salon:confirm_appointment_payment' item.id %}" 
+                                                    data-target="#payment-{{ item.id }}">
+                                                Confirm Payment
+                                            </button>
                                             {% endif %}
+                                            <button type="button" class="btn btn-sm btn-danger cancel-btn" 
+                                                    data-url="{% url 'salon:cancel_appointment' item.id %}" 
+                                                    data-subservice="{% if item.subservice %}{{ item.subservice.name }}{% else %}{{ item.service.name }}{% endif %}">
+                                                <i class="fas fa-times me-1"></i>Cancel
+                                            </button>
+                                        {% elif entry.service.service_type == "order" %}
+                                            <a href="{% url 'salon:view_order' item.id %}" class="btn btn-info btn-sm"><i class="fas fa-eye me-1"></i>View</a>
+                                            {% if item.payment_status != "paid" %}
+                                            <button type="button" class="btn btn-success btn-sm ajax-btn" 
+                                                    data-url="{% url 'salon:confirm_product_order' item.id %}" 
+                                                    data-target="#payment-{{ item.id }}">
+                                                <i class="fas fa-check me-1"></i>Confirm
+                                            </button>
+                                            {% endif %}
+                                            <button type="button" class="btn btn-sm btn-danger cancel-btn" 
+                                                    data-url="{% url 'salon:cancel_product_order' item.id %}" 
+                                                    data-subservice="{% if item.subservice %}{{ item.subservice.name }}{% else %}{{ item.service.name }}{% endif %}">
+                                                <i class="fas fa-times me-1"></i>Cancel
+                                            </button>
                                         {% endif %}
                                     </td>
                                 </tr>
@@ -183,57 +187,64 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function (el) { return new bootstrap.Tooltip(el); });
+$(document).ready(function() {
+    // Confirm buttons
+    $('.ajax-btn').click(function() {
+        let btn = $(this);
+        let url = btn.data('url');
+        let target = $(btn.data('target'));
+        btn.prop('disabled', true).text('Processing...');
 
-    const adminTabs = document.getElementById('adminTabs');
-    if (adminTabs) {
-        adminTabs.addEventListener('click', function(e) {
-            if (e.target.tagName === 'BUTTON') {
-                localStorage.setItem('activeAdminTab', e.target.id);
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: { csrfmiddlewaretoken: '{{ csrf_token }}' },
+            success: function(res) {
+                if(res.success) {
+                    target.html('<span class="badge bg-success">Confirmed</span>');
+                    btn.prop('disabled', true).text('Done');
+                } else {
+                    alert(res.message || 'Action failed');
+                    btn.prop('disabled', false).text('Retry');
+                }
+            },
+            error: function() {
+                alert('AJAX request failed');
+                btn.prop('disabled', false).text('Retry');
             }
         });
+    });
 
-        const activeTab = localStorage.getItem('activeAdminTab');
-        if (activeTab) {
-            const tab = new bootstrap.Tab(document.getElementById(activeTab));
-            tab.show();
-        }
-    }
-});
-document.addEventListener('DOMContentLoaded', function() {
-    // Confirm Payment AJAX
-    const buttons = document.querySelectorAll('.confirm-payment-btn');
+    // Cancel buttons
+    $('.cancel-btn').click(function() {
+        let btn = $(this);
+        let subservice = btn.data('subservice');
+        let reason = prompt(`Please enter the reason for cancelling the ${subservice}:`);
+        if(reason === null || reason.trim() === '') return;
 
-    buttons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const orderType = this.dataset.orderType;
-            const orderId = this.dataset.orderId;
+        let url = btn.data('url');
+        let row = btn.closest('tr');
 
-            fetch(`/confirm-payment/${orderType}/${orderId}/`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => {
-                if (response.ok) {
-                    // Change button state
-                    btn.classList.remove('btn-warning');
-                    btn.classList.add('btn-success');
-                    btn.textContent = 'Payment Confirmed';
-                    btn.disabled = true;
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: {
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+                reason: reason
+            },
+            success: function(res) {
+                if(res.success) {
+                    row.fadeOut(300, function() { $(this).remove(); });
+                    alert('Cancelled and reason sent to client!');
                 } else {
-                    alert('Failed to confirm payment. Try again.');
+                    alert(res.message || 'Cancellation failed');
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error confirming payment.');
-            });
+            },
+            error: function() {
+                alert('AJAX request failed');
+            }
         });
     });
 });

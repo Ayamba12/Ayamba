@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Appointment Cancellation - Awinso Hair Care</title>
+</head>
+<body>
+    <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
+        <h2 style="color: #d9534f;">Appointment Cancellation Notice</h2>
+        
+        <p>Dear {{ appointment.customer_name }},</p>
+        
+        <p>We regret to inform you that your appointment has been cancelled.</p>
+        
+        <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #d9534f; margin: 20px 0;">
+            <h3 style="margin-top: 0;">Appointment Details:</h3>
+            <p><strong>Service:</strong> {{ appointment.service.name }}</p>
+            <p><strong>Date & Time:</strong> {{ appointment.appointment_date|date:"F j, Y, g:i a" }}</p>
+            {% if appointment.subservice %}
+            <p><strong>Subservice:</strong> {{ appointment.subservice.name }}</p>
+            {% endif %}
+        </div>
+        
+        <div style="background-color: #fff3cd; padding: 15px; border-left: 4px solid #ffc107; margin: 20px 0;">
+            <h3 style="margin-top: 0;">Cancellation Reason:</h3>
+            <p>{{ reason }}</p>
+        </div>
+        
+        <p>We apologize for any inconvenience this may cause. If you'd like to reschedule or have any questions, 
+           please don't hesitate to contact us.</p>
+        
+        <p>Thank you for your understanding.</p>
+        
+        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+        
+        <p style="color: #6c757d; font-size: 14px;">
+            Best regards,<br>
+            <strong>Awinso Hair Care Team</strong><br>
+            Phone: 0599691588<br>
+            Email: ayambaisaac2@gmail.com<br>
+            Address: curve new market
+        </p>
+    </div>
+</body>
+</html>

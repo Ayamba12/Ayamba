@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Wig Order Confirmed</title>
+</head>
+<body>
+    <h2>Your Wig Order Has Been Confirmed</h2>
+    <p>Dear {{ order.customer_name }},</p>
+    <p>Your wig order has been confirmed and is being processed.</p>
+    <p><strong>Order Details:</strong></p>
+    <ul>
+        <li>Order ID: {{ order.id }}</li>
+        <li>Wig: {{ order.wig.name }}</li>
+        <li>Total: GHS {{ order.total_price }}</li>
+    </ul>
+    <p>Thank you for your purchase!</p>
+</body>
+</html>

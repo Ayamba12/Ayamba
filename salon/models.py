@@ -3,7 +3,8 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.core.validators import RegexValidator
 from datetime import datetime, timedelta
-
+from django.contrib.auth import get_user_model
+from django.conf import settings
 
 class Service(models.Model):
     SERVICE_TYPES = [
@@ -24,6 +25,14 @@ class Service(models.Model):
 
     def __str__(self):
         return self.name
+
+    @property
+    def is_booking_service(self):
+        return self.service_type == 'booking'
+    
+    @property
+    def is_order_service(self):
+        return self.service_type == 'order'
 
 
 class SubService(models.Model):
@@ -59,6 +68,11 @@ class SubService(models.Model):
     def has_duration(self):
         """For appointment services - check if duration is set"""
         return self.duration is not None
+
+    def clean(self):
+        """Validate that duration is set for booking services"""
+        if self.service.is_booking_service and not self.duration:
+            raise ValidationError("Duration is required for booking services")
 
 
 class HairStyle(models.Model):
@@ -102,17 +116,22 @@ class Wig(models.Model):
     def in_stock(self):
         return self.stock > 0
 
-from datetime import datetime, timedelta
+    def reduce_stock(self, quantity):
+        """Reduce stock by given quantity"""
+        if quantity > self.stock:
+            raise ValidationError(f"Not enough stock. Only {self.stock} available.")
+        self.stock -= quantity
+        self.save()
+
 
 class AppointmentManager(models.Manager):
     def get_available_slots(self, service, date, subservice=None):
+        from .utils import calculate_duration  # Import here to avoid circular imports
+        
         start_of_day = datetime.combine(date, datetime.min.time()).replace(hour=8)
         end_of_day = datetime.combine(date, datetime.min.time()).replace(hour=20)
 
-        duration = timedelta(minutes=30)
-        if subservice and subservice.duration:
-            duration = subservice.duration
-
+        duration = calculate_duration(subservice)
         buffer_time = timedelta(minutes=10)
 
         slots = []
@@ -131,7 +150,7 @@ class AppointmentManager(models.Manager):
             if not overlap:
                 slots.append(current)
 
-            current += timedelta(minutes=15)  # stepping
+            current += timedelta(minutes=15)
 
         return slots
 
@@ -154,21 +173,23 @@ class Appointment(models.Model):
         ('cancelled', 'Cancelled'),
     ]
 
-    payment_method = models.CharField(
-        max_length=20,
-        choices=PAYMENT_METHOD_CHOICES,
-        default='cash'
-    )
-    payment_status = models.CharField(
-        max_length=10,
-        choices=PAYMENT_STATUS_CHOICES,
-        default='pending'
-    )
+    CANCELLED_BY_CHOICES = [
+        ('client', 'Client'),
+        ('admin', 'Admin'),
+        ('system', 'System'),
+    ]
 
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='appointments'
+    )
 
     phone_validator = RegexValidator(
         regex=r'^\+?\d{9,15}$',
-        message="Phone number must be entered in the format: '+233123456789'. Up to 15 digits allowed."
+        message="Phone number must be entered in the format: '0123456789'. Up to 15 digits allowed."
     )
 
     customer_name = models.CharField(max_length=100)
@@ -185,7 +206,27 @@ class Appointment(models.Model):
     estimated_duration = models.DurationField(null=True, blank=True)
     confirmed_time = models.DateTimeField(null=True, blank=True)
 
-    objects = AppointmentManager()   # ✅ add here
+    payment_method = models.CharField(
+        max_length=20,
+        choices=PAYMENT_METHOD_CHOICES,
+        default='cash'
+    )
+    payment_status = models.CharField(
+        max_length=10,
+        choices=PAYMENT_STATUS_CHOICES,
+        default='pending'
+    )
+
+    cancelled_by = models.CharField(
+        max_length=20, 
+        choices=CANCELLED_BY_CHOICES,
+        blank=True, 
+        null=True
+    )
+    cancellation_reason = models.TextField(blank=True, null=True)
+    cancelled_at = models.DateTimeField(blank=True, null=True)
+
+    objects = AppointmentManager()
 
     class Meta:
         ordering = ['-appointment_date']
@@ -193,54 +234,78 @@ class Appointment(models.Model):
         verbose_name_plural = "Appointments"
 
     def __str__(self):
-        return f"{self.customer_name} - {self.service.name}"
+        return f"{self.customer_name} - {self.service.name} - {self.appointment_date}"
 
+    @property
+    def is_upcoming(self):
+        """Check if appointment is in the future"""
+        return self.appointment_date > timezone.now()
+
+    @property
+    def is_cancellable(self):
+        """Check if appointment can be cancelled"""
+        return self.status in ['pending', 'confirmed'] and self.is_upcoming
+
+    def get_duration(self):
+        """Get the duration of the appointment"""
+        from .utils import calculate_duration
+        return calculate_duration(self.subservice, self.estimated_duration)
 
     def clean(self):
-        if self.appointment_date and self.appointment_date < timezone.now():
-            raise ValidationError("Appointment date cannot be in the past")
+        """Validate appointment data"""
+        from .utils import validate_appointment_time, check_time_conflict
+        
+        # Validate appointment time
+        if self.appointment_date:
+            try:
+                validate_appointment_time(self.appointment_date)
+            except ValidationError as e:
+                raise ValidationError({"appointment_date": str(e)})
 
-        if self.appointment_date and self.service and self.status in ["pending", "confirmed"]:
-            start = self.appointment_date
+        # Check for time conflicts
+        if (self.appointment_date and self.service and 
+            self.service.is_booking_service and 
+            self.status in ["pending", "confirmed"]):
+            
+            duration = self.get_duration()
+            conflict_result = check_time_conflict(
+                self.service, 
+                self.appointment_date, 
+                duration, 
+                self if self.pk else None
+            )
+            
+            if conflict_result['conflict']:
+                conflict_start = conflict_result['conflict_start'].strftime('%Y-%m-%d %H:%M')
+                conflict_end = conflict_result['conflict_end'].strftime('%H:%M')
+                raise ValidationError(
+                    f"Time slot conflict: {conflict_start} to {conflict_end} is already booked. "
+                    f"Please choose another time."
+                )
 
-            # ✅ Determine duration
-            if self.subservice and self.subservice.duration:
-                duration = self.subservice.duration
-            elif self.estimated_duration:
-                duration = self.estimated_duration
-            else:
-                duration = timedelta(minutes=30)
+    def cancel(self, cancelled_by, reason=""):
+        """Cancel appointment with reason"""
+        self.status = 'cancelled'
+        self.cancelled_by = cancelled_by
+        self.cancellation_reason = reason
+        self.cancelled_at = timezone.now()
+        self.save()
 
-            end = start + duration
-            end_with_buffer = end + timedelta(minutes=10)
+    def confirm_appointment(self):
+        """Confirm the booking/appointment"""
+        self.status = 'confirmed'
+        self.confirmed_time = timezone.now()
+        self.save()
 
-            # Get all existing confirmed/pending bookings for this service
-            existing = Appointment.objects.filter(
-                service=self.service,
-                status__in=["pending", "confirmed"]
-            ).exclude(pk=self.pk)
+    def confirm_payment(self):
+        """Confirm payment only"""
+        self.payment_status = 'paid'
+        self.save()
 
-            for other in existing:
-                other_start = other.appointment_date
-
-                if other.subservice and other.subservice.duration:
-                    other_duration = other.subservice.duration
-                elif other.estimated_duration:
-                    other_duration = other.estimated_duration
-                else:
-                    other_duration = timedelta(minutes=30)
-
-                other_end = other_start + other_duration
-                other_end_with_buffer = other_end + timedelta(minutes=10)
-
-                # Overlap check
-                if start < other_end_with_buffer and other_start < end_with_buffer:
-                    raise ValidationError(
-                        f"Sorry, {other_start.strftime('%Y-%m-%d %H:%M')} "
-                        f"to {other_end_with_buffer.strftime('%H:%M')} is already booked. "
-                        f"Please choose another time."
-                    )
-
+    def complete(self):
+        """Mark appointment as completed"""
+        self.status = 'completed'
+        self.save()
 
 
 class WigOrder(models.Model):
@@ -300,12 +365,32 @@ class WigOrder(models.Model):
         verbose_name_plural = "Wig Orders"
 
     def __str__(self):
-        return f"{self.customer_name} - {self.wig.name}"
+        return f"{self.customer_name} - {self.wig.name} - {self.quantity}"
 
     def save(self, *args, **kwargs):
         # Automatically calculate total price
         self.total_price = self.wig.price * self.quantity
         super().save(*args, **kwargs)
+
+    @property
+    def can_be_cancelled(self):
+        """Check if order can be cancelled"""
+        return self.status in ['pending', 'confirmed']
+
+    def cancel(self):
+        """Cancel the order"""
+        if self.can_be_cancelled:
+            self.status = 'cancelled'
+            self.save()
+        else:
+            raise ValidationError("Order cannot be cancelled in its current status")
+
+    def confirm(self):
+        """Confirm the order"""
+        self.status = 'confirmed'
+        self.payment_confirmed = True
+        self.save()
+
 
 class ProductOrder(models.Model):
     PAYMENT_METHOD_CHOICES = [
@@ -336,10 +421,29 @@ class ProductOrder(models.Model):
     )
 
     order_date = models.DateTimeField(auto_now_add=True)
-
     subservice = models.ForeignKey(SubService, on_delete=models.SET_NULL, null=True, blank=True)
 
+    class Meta:
+        ordering = ['-order_date']
+        verbose_name = "Product Order"
+        verbose_name_plural = "Product Orders"
 
     def __str__(self):
         return f"{self.customer_name} - {self.product_name} ({self.quantity})"
 
+    @property
+    def can_be_cancelled(self):
+        """Check if order can be cancelled"""
+        return self.payment_status == 'pending'
+
+    def cancel(self):
+        """Cancel the order and restore stock"""
+        if self.can_be_cancelled:
+            self.payment_status = 'cancelled'
+            # Restore stock if this was a product order
+            if self.subservice:
+                self.subservice.stock += self.quantity
+                self.subservice.save()
+            self.save()
+        else:
+            raise ValidationError("Order cannot be cancelled after payment is confirmed")

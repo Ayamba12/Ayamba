@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Client Cancellation Notification</title>
+</head>
+<body>
+    <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
+        <h2 style="color: #d9534f;">Client Cancellation Notification</h2>
+        
+        <p>A client has cancelled their appointment:</p>
+        
+        <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #d9534f; margin: 20px 0;">
+            <h3 style="margin-top: 0;">Appointment Details:</h3>
+            <p><strong>Client:</strong> {{ appointment.customer_name }}</p>
+            <p><strong>Email:</strong> {{ appointment.customer_email }}</p>
+            <p><strong>Phone:</strong> {{ appointment.customer_phone }}</p>
+            <p><strong>Service:</strong> {{ appointment.service.name }}</p>
+            <p><strong>Date & Time:</strong> {{ appointment.appointment_date|date:"F j, Y, g:i a" }}</p>
+            {% if appointment.subservice %}
+            <p><strong>Subservice:</strong> {{ appointment.subservice.name }}</p>
+            {% endif %}
+        </div>
+        
+        <div style="background-color: #fff3cd; padding: 15px; border-left: 4px solid #ffc107; margin: 20px 0;">
+            <h3 style="margin-top: 0;">Client's Cancellation Reason:</h3>
+            <p>{{ reason }}</p>
+        </div>
+        
+        <p>This time slot is now available for other bookings.</p>
+        
+        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+        
+        <p style="color: #6c757d; font-size: 14px;">
+            Awinso Hair Care System Notification
+        </p>
+    </div>
+</body>
+</html>

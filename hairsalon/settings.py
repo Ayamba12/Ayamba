@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import os
 from pathlib import Path
+import ssl
+import smtplib
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -23,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-k_-12k4n4r#kyd41=vqd8v)(q$m_#3gpm&%d@)-e_s5(6wrvz='
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = []
 
@@ -40,19 +42,16 @@ INSTALLED_APPS = [
     'salon',
 ]
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # For development - emails print to console
-EMAIL_HOST = 'smtp.gmail.com'  # For production with Gmail
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.sendgrid.net"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'ayambaisaac2@gmail.com'  # Your email
-EMAIL_HOST_PASSWORD = 'your-app-password'  # Your app password (not regular password)
+EMAIL_HOST_USER = "apikey"   # literally the word: apikey
+EMAIL_HOST_PASSWORD = os.getenv("SENDGRID_API_KEY")
+DEFAULT_FROM_EMAIL = "ayambaisaac2@gmail.com"
 
-# Default from email
-DEFAULT_FROM_EMAIL = 'Awinso Hair Care <noreply@awinsohaircare.com>'
-SERVER_EMAIL = 'ayambaisaac2@gmail.com'  # For error notifications
-
-# Your email address to receive notifications
-ADMIN_EMAIL = 'ayambaisaac2@gmail.com'  # Replace with your actual email
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
 
 # settings.py
 LOGIN_URL = '/accounts/login/'
@@ -150,7 +149,13 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']  # Add this line
 
 
+# Add this for production
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+ssl._create_default_https_context = ssl._create_unverified_context
