@@ -13,6 +13,7 @@ import os
 from pathlib import Path
 import ssl
 import certifi
+from decouple import config
 
 # Force certifi SSL for all HTTPS requests
 ssl_context = ssl.create_default_context(cafile=certifi.where())
@@ -47,20 +48,23 @@ INSTALLED_APPS = [
     'salon',
 ]
 
-# Email configuration
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.sendgrid.net"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True  # Use TLS instead of SSL
-EMAIL_USE_SSL = False  # Make sure this is False
-EMAIL_HOST_USER = "apikey"
-EMAIL_HOST_PASSWORD = os.getenv("SENDGRID_API_KEY")
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "ayambaisaac2@gmail.com")
+# Email configuration - Using SendGrid API directly
 
-# Add SSL context for email
-EMAIL_SSL_CERTFILE = None
-EMAIL_SSL_KEYFILE = None
-EMAIL_TIMEOUT = 30
+SECRET_KEY = config('SECRET_KEY')
+DEBUG = config('DEBUG', default=True, cast=bool)
+SENDGRID_API_KEY = config('SENDGRID_API_KEY')
+EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
+SENDGRID_SANDBOX_MODE_IN_DEBUG = False
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
+
+
+# Optional: For tracking opens/clicks
+SENDGRID_TRACKING_SETTINGS = {
+    'click_tracking': True,
+    'open_tracking': True,
+    'ganalytics_tracking': False,
+}
+
 # Authentication settings
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/'  # Where to redirect after login
@@ -169,4 +173,3 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # ssl._create_default_https_context = ssl._create_unverified_context
 # CSRF_COOKIE_SECURE = True
 # SESSION_COOKIE_SECURE = True
-# EMAIL_USE_SSL = True

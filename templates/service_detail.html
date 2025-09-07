@@ -104,7 +104,7 @@
                             </a>
                             {% else %}
                             <div class="alert alert-info py-2">
-                                <small>Please <a href="{% url 'login' %}?next={% url 'salon:book_appointment' service.id %}">login</a> to book this service</small>
+                                <small>Please <a href="{% url 'salon:login' %}?next={% url 'salon:book_appointment' service.id %}">login</a> to book this service</small>
                             </div>
                             {% endif %}
                         {% endif %}

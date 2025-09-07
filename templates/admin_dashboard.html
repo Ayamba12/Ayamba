@@ -94,13 +94,15 @@
                                 {% for item in entry.items %}
                                 <tr id="row-{{ item.id }}">
                                     <td>{{ item.customer_name }}</td>
-                                    <td>
-                                        {% if item.subservice %}
-                                            {{ item.subservice.name }}
-                                        {% else %}
-                                            {{ item.service.name }}
-                                        {% endif %}
-                                    </td>
+                                                                    
+                                <td>
+                                    {% if item.subservice %}
+                                        {{ item.subservice.name }} - ${{ item.subservice.price }}
+                                    {% else %}
+                                        {{ item.service.name }}
+                                    {% endif %}
+                                </td>
+
                                     <td>
                                         {% if item.appointment_date %}
                                             {{ item.appointment_date|date:"M d, Y H:i" }}

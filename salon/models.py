@@ -235,6 +235,12 @@ class Appointment(models.Model):
     def __str__(self):
         return f"{self.customer_name} - {self.service.name} - {self.appointment_date}"
 
+ 
+    @property
+    def price(self):
+        if self.subservice:
+            return self.subservice.price
+        return None
     @property
     def is_upcoming(self):
         """Check if appointment is in the future"""

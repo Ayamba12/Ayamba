@@ -1,4 +1,3 @@
-from django.core.mail import send_mail
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
@@ -8,12 +7,55 @@ from datetime import timedelta
 import logging
 from django.core.mail.backends.base import BaseEmailBackend
 from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
+from sendgrid.helpers.mail import Mail, Content, To, From, Subject, TrackingSettings, ClickTracking, OpenTracking
+import json
 
 logger = logging.getLogger(__name__)
 
+# Create a SendGrid client instance
+sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
 
-# Email Functions
+# Email Functions using SendGrid directly
+def send_sendgrid_email(to_email, subject, html_content, from_email=None):
+    """Send email using SendGrid API directly"""
+    if from_email is None:
+        from_email = settings.DEFAULT_FROM_EMAIL
+    
+    try:
+        # Create Mail object with HTML content
+        mail = Mail(
+            from_email=From(from_email),
+            to_emails=To(to_email),
+            subject=Subject(subject),
+            html_content=Content("text/html", html_content)
+        )
+        
+        # Add tracking settings if configured
+        if hasattr(settings, 'SENDGRID_TRACKING_SETTINGS'):
+            tracking_settings = TrackingSettings()
+            if settings.SENDGRID_TRACKING_SETTINGS.get('click_tracking', True):
+                tracking_settings.click_tracking = ClickTracking(
+                    enable=True,
+                    enable_text=True
+                )
+            if settings.SENDGRID_TRACKING_SETTINGS.get('open_tracking', True):
+                tracking_settings.open_tracking = OpenTracking(enable=True)
+            mail.tracking_settings = tracking_settings
+        
+        # Send email
+        response = sg.send(mail)
+        
+        if response.status_code in [200, 202]:
+            logger.info(f"Email sent successfully to {to_email}")
+            return True
+        else:
+            logger.error(f"SendGrid API error: {response.status_code} - {response.body}")
+            return False
+            
+    except Exception as e:
+        logger.error(f"Error sending email via SendGrid: {e}")
+        return False
+
 def send_appointment_request_notification(appointment):
     """Send email to admin about NEW appointment request (pending)"""
     subject = f'New Appointment Request: {appointment.service.name}'
@@ -22,21 +64,7 @@ def send_appointment_request_notification(appointment):
         'appointment': appointment,
     })
     
-    plain_message = strip_tags(html_message)
-    
-    try:
-        send_mail(
-            subject=subject,
-            message=plain_message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[settings.ADMIN_EMAIL],
-            html_message=html_message,
-            fail_silently=False,
-        )
-        return True
-    except Exception as e:
-        logger.error(f"Error sending appointment request notification: {e}")
-        return False
+    return send_sendgrid_email(settings.ADMIN_EMAIL, subject, html_message)
 
 def send_appointment_request_acknowledgement(appointment):
     """Send acknowledgement to customer that request was received (not confirmed yet)"""
@@ -46,21 +74,7 @@ def send_appointment_request_acknowledgement(appointment):
         'appointment': appointment,
     })
     
-    plain_message = strip_tags(html_message)
-    
-    try:
-        send_mail(
-            subject=subject,
-            message=plain_message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[appointment.customer_email],
-            html_message=html_message,
-            fail_silently=False,
-        )
-        return True
-    except Exception as e:
-        logger.error(f"Error sending appointment acknowledgement email: {e}")
-        return False
+    return send_sendgrid_email(appointment.customer_email, subject, html_message)
 
 def send_appointment_confirmation_to_customer(appointment):
     """Send confirmation email to customer AFTER admin confirms"""
@@ -71,17 +85,7 @@ def send_appointment_confirmation_to_customer(appointment):
             'appointment': appointment,
         })
         
-        plain_message = strip_tags(html_message)
-        
-        send_mail(
-            subject=subject,
-            message=plain_message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[appointment.customer_email],
-            html_message=html_message,
-            fail_silently=False,
-        )
-        return True
+        return send_sendgrid_email(appointment.customer_email, subject, html_message)
     except Exception as e:
         logger.error(f"Error sending appointment confirmation email: {e}", exc_info=True)
         return False
@@ -101,17 +105,7 @@ def send_order_confirmation_to_customer(order, order_type):
             'order_type': order_type,
         })
         
-        plain_message = strip_tags(html_message)
-        
-        send_mail(
-            subject=subject,
-            message=plain_message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[order.customer_email],
-            html_message=html_message,
-            fail_silently=False,
-        )
-        return True
+        return send_sendgrid_email(order.customer_email, subject, html_message)
     except Exception as e:
         logger.error(f"Error sending order confirmation email: {e}", exc_info=True)
         return False
@@ -131,17 +125,7 @@ def send_order_cancellation_email(order, order_type):
             'order_type': order_type,
         })
         
-        plain_message = strip_tags(html_message)
-        
-        send_mail(
-            subject=subject,
-            message=plain_message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[order.customer_email],
-            html_message=html_message,
-            fail_silently=False,
-        )
-        return True
+        return send_sendgrid_email(order.customer_email, subject, html_message)
     except Exception as e:
         logger.error(f"Error sending order cancellation email: {e}", exc_info=True)
         return False
@@ -156,17 +140,7 @@ def send_appointment_cancellation_email(appointment, reason):
             'reason': reason,
         })
         
-        plain_message = strip_tags(html_message)
-        
-        send_mail(
-            subject=subject,
-            message=plain_message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[appointment.customer_email],
-            html_message=html_message,
-            fail_silently=False,
-        )
-        return True
+        return send_sendgrid_email(appointment.customer_email, subject, html_message)
     except Exception as e:
         logger.error(f"Error sending appointment cancellation email: {e}", exc_info=True)
         return False
@@ -181,17 +155,7 @@ def send_appointment_cancellation_notification_to_admin(appointment, reason):
             'reason': reason,
         })
         
-        plain_message = strip_tags(html_message)
-        
-        send_mail(
-            subject=subject,
-            message=plain_message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[settings.ADMIN_EMAIL],
-            html_message=html_message,
-            fail_silently=False,
-        )
-        return True
+        return send_sendgrid_email(settings.ADMIN_EMAIL, subject, html_message)
     except Exception as e:
         logger.error(f"Error sending admin cancellation notification: {e}", exc_info=True)
         return False
@@ -206,22 +170,26 @@ def send_appointment_cancellation_confirmation(appointment, reason):
             'reason': reason,
         })
         
-        plain_message = strip_tags(html_message)
-        
-        send_mail(
-            subject=subject,
-            message=plain_message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[appointment.customer_email],
-            html_message=html_message,
-            fail_silently=False,
-        )
-        return True
+        return send_sendgrid_email(appointment.customer_email, subject, html_message)
     except Exception as e:
         logger.error(f"Error sending client cancellation confirmation: {e}", exc_info=True)
         return False
 
-# Utility Functions
+def send_payment_confirmation_to_customer(appointment):
+    """Send payment confirmation email to customer"""
+    subject = f'Payment Confirmed - {appointment.service.name}'
+    
+    try:
+        html_message = render_to_string('emails/payment_confirmed.html', {
+            'appointment': appointment,
+        })
+        
+        return send_sendgrid_email(appointment.customer_email, subject, html_message)
+    except Exception as e:
+        logger.error(f"Error sending payment confirmation email: {e}", exc_info=True)
+        return False
+
+# Utility Functions (unchanged)
 def process_payment_method(request):
     """Handle payment method processing consistently"""
     payment_method = request.POST.get('payment_method', 'cash')
@@ -273,30 +241,7 @@ def check_time_conflict(service, start_time, duration, exclude_appointment=None)
     
     return {'conflict': False}
 
-def send_payment_confirmation_to_customer(appointment):
-    """Send payment confirmation email to customer"""
-    subject = f'Payment Confirmed - {appointment.service.name}'
-    
-    try:
-        html_message = render_to_string('emails/payment_confirmed.html', {
-            'appointment': appointment,
-        })
-        
-        plain_message = strip_tags(html_message)
-        
-        send_mail(
-            subject=subject,
-            message=plain_message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[appointment.customer_email],
-            html_message=html_message,
-            fail_silently=False,
-        )
-        return True
-    except Exception as e:
-        logger.error(f"Error sending payment confirmation email: {e}", exc_info=True)
-        return False
-    
+# Enhanced SendGridEmailBackend
 class SendGridEmailBackend(BaseEmailBackend):
     def __init__(self, fail_silently=False, **kwargs):
         super().__init__(fail_silently=fail_silently, **kwargs)
@@ -309,16 +254,31 @@ class SendGridEmailBackend(BaseEmailBackend):
         success_count = 0
         for email_message in email_messages:
             try:
+                # Create Mail object with HTML content
                 mail = Mail(
-                    from_email=email_message.from_email or settings.DEFAULT_FROM_EMAIL,
-                    to_emails=email_message.to,
-                    subject=email_message.subject,
-                    html_content=email_message.body
+                    from_email=From(email_message.from_email or settings.DEFAULT_FROM_EMAIL),
+                    to_emails=To(email_message.to),
+                    subject=Subject(email_message.subject),
+                    html_content=Content("text/html", email_message.body)
                 )
                 
+                # Add tracking settings if configured
+                if hasattr(settings, 'SENDGRID_TRACKING_SETTINGS'):
+                    tracking_settings = TrackingSettings()
+                    if settings.SENDGRID_TRACKING_SETTINGS.get('click_tracking', True):
+                        tracking_settings.click_tracking = ClickTracking(
+                            enable=True,
+                            enable_text=True
+                        )
+                    if settings.SENDGRID_TRACKING_SETTINGS.get('open_tracking', True):
+                        tracking_settings.open_tracking = OpenTracking(enable=True)
+                    mail.tracking_settings = tracking_settings
+                
+                # Send email
                 response = self.sg.send(mail)
                 if response.status_code in [200, 202]:
                     success_count += 1
+                    logger.info(f"Email sent successfully to {email_message.to}")
                 else:
                     logger.error(f"SendGrid API error: {response.status_code} - {response.body}")
                     

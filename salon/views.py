@@ -678,3 +678,12 @@ class CustomPasswordResetView(PasswordResetView):
     email_template_name = 'registration/password_reset_email.html'
     subject_template_name = 'registration/password_reset_subject.txt'
     success_url = reverse_lazy('salon:password_reset_done')
+
+from django.core.paginator import Paginator
+
+def appointment_list(request):
+    appointments = Appointment.objects.filter(user=request.user).order_by('-appointment_date')
+    paginator = Paginator(appointments, 10)  # Show 10 appointments per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return render(request, 'appointment_list.html', {'page_obj': page_obj})
