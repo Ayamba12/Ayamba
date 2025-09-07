@@ -36,7 +36,12 @@
                             {{ form.username }}
                             <div class="form-text">Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.</div>
                         </div>
-                        
+                        <div class="mb-3">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">email</label>
+                            {{ form.email }}
+                            <div class="form-text">Enter a correct and working email. This will be used to reset your password if lost</div>
+                        </div>
+
                         <div class="mb-3">
                             <label for="{{ form.password1.id_for_label }}" class="form-label">Password</label>
                             {{ form.password1 }}

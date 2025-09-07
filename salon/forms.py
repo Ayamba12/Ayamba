@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 import re
+from django.contrib.auth.forms import PasswordResetForm
 
 class AppointmentForm(forms.ModelForm):
     class Meta:
@@ -36,3 +37,15 @@ class UserRegisterForm(UserCreationForm):
     class Meta:
         model = User
         fields = ['username', 'email', 'password1', 'password2']
+
+
+class CustomPasswordResetForm(PasswordResetForm):
+    email = forms.EmailField(max_length=254, required=True)
+
+    def clean_email(self):
+        email = self.cleaned_data['email']
+        if not User.objects.filter(email=email).exists():
+            raise ValidationError(
+                "No account found with this email. Please create an account first."
+            )
+        return email

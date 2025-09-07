@@ -13,6 +13,7 @@ from django.utils.dateparse import parse_datetime
 from datetime import date, timedelta
 from django.contrib.auth import get_user_model
 import logging
+from .forms import UserRegisterForm
 from django.db import transaction
 from .models import Service, HairStyle, Wig, Appointment, WigOrder, SubService, ProductOrder
 from .utils import (
@@ -120,7 +121,7 @@ def create_appointment_instance(service, form_data, user, payment_method, paymen
 # Authentication Views
 def register(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = UserRegisterForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
@@ -129,7 +130,7 @@ def register(request):
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
-        form = UserCreationForm()
+        form = UserRegisterForm()
     
     return render(request, 'register.html', {'form': form})
 
@@ -666,3 +667,14 @@ def my_orders(request):
     )
 
     return render(request, 'my_orders.html', {'orders': orders})
+
+from django.contrib.auth.views import PasswordResetView
+from .forms import CustomPasswordResetForm
+from django.urls import reverse_lazy
+
+class CustomPasswordResetView(PasswordResetView):
+    form_class = CustomPasswordResetForm
+    template_name = 'registration/password_reset.html'
+    email_template_name = 'registration/password_reset_email.html'
+    subject_template_name = 'registration/password_reset_subject.txt'
+    success_url = reverse_lazy('salon:password_reset_done')

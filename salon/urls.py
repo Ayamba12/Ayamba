@@ -2,6 +2,8 @@ from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
 from django.urls import reverse_lazy
+from .views import CustomPasswordResetView
+
 
 app_name = 'salon'
 
@@ -49,6 +51,8 @@ urlpatterns = [
     path('accounts/logout/', auth_views.LogoutView.as_view(), name='logout'),
 
     # Password change URLs
+    path('password-reset/', CustomPasswordResetView.as_view(), name='password_reset'),
+
     path('accounts/password_change/',
          auth_views.PasswordChangeView.as_view(template_name='registration/password_change.html'),
          name='password_change'),
@@ -57,14 +61,14 @@ urlpatterns = [
          name='password_change_done'),
 
     # Password reset URLs
-    path('accounts/password_reset/',
-         auth_views.PasswordResetView.as_view(
-             template_name='registration/password_reset.html',
-             email_template_name='registration/password_reset_email.html',
-             subject_template_name='registration/password_reset_subject.txt',
-             success_url=reverse_lazy('salon:password_reset_done')
-         ),
-         name='password_reset'),
+    #path('accounts/password_reset/',
+     #    auth_views.PasswordResetView.as_view(
+      #       template_name='registration/password_reset.html',
+       #      email_template_name='registration/password_reset_email.html',
+        #     subject_template_name='registration/password_reset_subject.txt',
+             #success_url=reverse_lazy('salon:password_reset_done')
+         #),
+         #name='password_reset'),
     path('accounts/password_reset/done/',
          auth_views.PasswordResetDoneView.as_view(template_name='registration/password_reset_done.html'),
          name='password_reset_done'),
