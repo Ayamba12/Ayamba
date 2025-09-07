@@ -1,7 +1,7 @@
 # salon/admin.py
 from django.contrib import admin
 from django.db.models import Min, Max
-from django.utils.safestring import mark_safe  # Add this import
+from django.utils.safestring import mark_safe 
 from .models import Service, SubService, HairStyle, Wig, Appointment, WigOrder
 
 
@@ -26,7 +26,6 @@ class ServiceAdmin(admin.ModelAdmin):
     get_price_range.short_description = 'Price Range'
     
     def get_duration_range(self, obj):
-        # Get duration range from subservices
         durations = obj.subservices.filter(is_active=True).aggregate(
             min_duration=Min('duration'),
             max_duration=Max('duration')
@@ -40,10 +39,10 @@ class ServiceAdmin(admin.ModelAdmin):
 
 @admin.register(SubService)
 class SubServiceAdmin(admin.ModelAdmin):
-    list_display = ['name', 'service', 'price', 'get_duration', 'get_stock', 'is_active']  # FIXED
+    list_display = ['name', 'service', 'price', 'get_duration', 'get_stock', 'is_active'] 
     list_filter = ['service', 'is_active']
     search_fields = ['name', 'description']
-    list_editable = ['price', 'is_active']  # REMOVE duration from list_editable
+    list_editable = ['price', 'is_active'] 
     
     def get_duration(self, obj):
         return obj.duration if obj.duration else "—"
@@ -61,7 +60,6 @@ class SubServiceAdmin(admin.ModelAdmin):
         return "No Image"
     image_preview.short_description = 'Image Preview'
 
-# Keep the rest of your admin configuration as is
 @admin.register(HairStyle)
 class HairStyleAdmin(admin.ModelAdmin):
     list_display = ('name', 'is_active')

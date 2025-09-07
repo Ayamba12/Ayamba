@@ -13,6 +13,7 @@ from django.utils.dateparse import parse_datetime
 from datetime import date, timedelta
 from django.contrib.auth import get_user_model
 import logging
+from django.db import transaction
 from .models import Service, HairStyle, Wig, Appointment, WigOrder, SubService, ProductOrder
 from .utils import (
     send_appointment_request_notification, 
@@ -190,6 +191,7 @@ def service_list(request):
 def book_appointment(request, service_id):
     service = get_object_or_404(Service, id=service_id, is_active=True)
     
+
     if request.method == 'POST':
         try:
             form_data = extract_appointment_data(request)
@@ -212,32 +214,36 @@ def book_appointment(request, service_id):
                     id=form_data['subservice_id'], service=service, is_active=True
                 )
                 duration = calculate_duration(subservice)
-            
-            conflict_result = check_time_conflicts(
-                service, form_data['appointment_date'], duration
-            )
-            
-            if conflict_result['conflict']:
-                available_slots = Appointment.objects.get_available_slots(
-                    service, form_data['appointment_date'].date(), subservice
+
+            # --- Atomic transaction to avoid race conditions ---
+            with transaction.atomic():
+                conflict_result = check_time_conflicts(
+                    service, form_data['appointment_date'], duration
                 )
-                formatted_slots = [slot.strftime("%Y-%m-%d %H:%M") for slot in available_slots[:5]]
                 
-                msg = "Sorry, this slot conflicts with an existing booking. "
-                msg += "Here are some available times: " + ", ".join(formatted_slots) if formatted_slots else "No alternative slots available today."
-                messages.error(request, msg)
-                return redirect('salon:book_appointment', service_id=service.id)
-            
-            appointment = create_appointment_instance(
-                service, form_data, request.user, payment_method, payment_status
-            )
-            appointment.save()
-            
+                if conflict_result['conflict']:
+                    available_slots = Appointment.objects.get_available_slots(
+                        service, form_data['appointment_date'].date(), subservice
+                    )
+                    formatted_slots = [slot.strftime("%Y-%m-%d %H:%M") for slot in available_slots[:5]]
+                    
+                    msg = "Sorry, this slot conflicts with an existing booking. "
+                    msg += "Here are some available times: " + ", ".join(formatted_slots) if formatted_slots else "No alternative slots available today."
+                    messages.error(request, msg)
+                    return redirect('salon:book_appointment', service_id=service.id)
+                
+                # Create the appointment safely
+                appointment = create_appointment_instance(
+                    service, form_data, request.user, payment_method, payment_status
+                )
+                appointment.save()
+
+            # Send notifications outside the transaction
             send_appointment_request_notification(appointment)
             send_appointment_request_acknowledgement(appointment)
             messages.success(request, 'Your appointment has been requested. We will confirm shortly.')
             return redirect('salon:index')
-            
+
         except (ValueError, SubService.DoesNotExist) as e:
             messages.error(request, str(e))
         except Exception as e:
@@ -274,6 +280,8 @@ def appointment_list(request):
 @login_required
 def appointment_detail(request, appointment_id):
     appointment = get_object_or_404(Appointment, id=appointment_id)
+    appointments = Appointment.objects.filter(user=request.user).order_by('-appointment_date')
+    return render(request, 'salon/my_appointments.html', {'appointments': appointments})
     
     if not request.user.is_staff and appointment.user != request.user:
         messages.error(request, 'You can only view your own appointments.')
@@ -332,21 +340,22 @@ def confirm_appointment_payment(request, appointment_id):
 @require_POST
 def confirm_product_payment(request, order_type, order_id):
     """Confirm payment for product orders"""
-    if order_type == 'wig':
-        order = get_object_or_404(WigOrder, id=order_id)
-    else:
-        order = get_object_or_404(ProductOrder, id=order_id)
-    
-    order.payment_status = 'paid'
-    order.payment_confirmed = True
-    order.save()
+    try:
+        if order_type == 'wig':
+            order = get_object_or_404(WigOrder, id=order_id)
+        else:
+            order = get_object_or_404(ProductOrder, id=order_id)
+        
+        order.payment_status = 'paid'
+        order.payment_confirmed = True
+        order.save()
 
-    send_order_confirmation_to_customer(order, order_type)
+        send_order_confirmation_to_customer(order, order_type)
 
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return JsonResponse({'success': True, 'message': f'{order_type.title()} order payment confirmed'})
-
-    return redirect('salon:admin_dashboard')
+        return JsonResponse({'success': True, 'message': f'{order_type} order payment confirmed'})
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})
 
 
 def cancel_appointment_common(request, appointment_id, is_admin_cancellation=False):
@@ -406,7 +415,6 @@ def cancel_appointment_client(request, appointment_id):
     
     return cancel_appointment_common(request, appointment_id, is_admin_cancellation=False)
 
-# Order Views
 @login_required
 def order_product(request, service_id, subservice_id):
     try:
@@ -433,6 +441,7 @@ def order_product(request, service_id, subservice_id):
                 payment_method, payment_status = process_payment_method(request)
                 
                 order = ProductOrder.objects.create(
+                    user=request.user,  # <-- link to logged-in user
                     subservice=subservice,
                     customer_name=request.POST.get('customer_name'),
                     customer_email=request.POST.get('customer_email'),
@@ -476,6 +485,7 @@ def order_wig(request, wig_id):
             payment_method, payment_status = process_payment_method(request)
             
             order = WigOrder(
+                user=request.user,  # <-- link to logged-in user
                 wig=wig,
                 customer_name=request.POST.get('customer_name'),
                 customer_phone=request.POST.get('customer_phone'),
@@ -558,28 +568,70 @@ def confirm_payment(request, order_type, order_id):
         return order_action_common(request, order_id, order_type, 'confirm')
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
-# Admin Views
+from django.db.models import Case, When, IntegerField
+from django.contrib.admin.views.decorators import staff_member_required
+
 @staff_member_required
 def admin_dashboard(request):
     services = Service.objects.filter(is_active=True)
     service_data = []
-    
+
     for service in services:
         if service.service_type == "booking":
-            items = Appointment.objects.filter(service=service)
+            # Custom ordering: pending -> confirmed -> completed -> cancelled
+            items = Appointment.objects.filter(service=service).order_by(
+                Case(
+                    When(status='pending', then=0),
+                    When(status='confirmed', then=1),
+                    When(status='completed', then=2),
+                    When(status='cancelled', then=3),
+                    output_field=IntegerField(),
+                ),
+                '-appointment_date'  # newest first
+            )
+
         elif service.service_type == "order":
-            wigs_items = WigOrder.objects.filter(wig__service=service)
-            products_items = ProductOrder.objects.filter(subservice__service=service)
+            # For Wig orders
+            wigs_items = WigOrder.objects.filter(wig__service=service).order_by(
+                Case(
+                    When(status='pending', then=0),
+                    When(status='confirmed', then=1),
+                    When(status='shipped', then=2),
+                    When(status='delivered', then=3),
+                    When(status='cancelled', then=4),
+                    output_field=IntegerField(),
+                ),
+                '-order_date'  # newest first
+            )
+
+            # For Product orders
+            products_items = ProductOrder.objects.filter(subservice__service=service).order_by(
+                Case(
+                    When(payment_status='pending', then=0),
+                    When(payment_status='paid', then=1),
+                    output_field=IntegerField(),
+                ),
+                '-order_date'  # newest first
+            )
+
+            # Combine both types of orders
             items = list(wigs_items) + list(products_items)
+
         else:
             items = []
-        
-        service_data.append({"service": service, "items": items})
-    
-    return render(request, "admin_dashboard.html", {
+
+        service_data.append({
+            "service": service,
+            "items": items
+        })
+
+    context = {
         "user": request.user,
         "service_data": service_data,
-    })
+    }
+
+    return render(request, "admin_dashboard.html", context)
+
 
 def delete_service(request, service_id):
     service = get_object_or_404(Service, id=service_id)
@@ -601,3 +653,16 @@ def send_appointment_confirmation(appointment):
     Thank you for choosing Awinso Hair Care!
     '''
     send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [appointment.customer_email])
+
+@login_required
+def my_orders(request):
+    product_orders = ProductOrder.objects.filter(user=request.user)
+    wig_orders = WigOrder.objects.filter(user=request.user)
+
+    orders = sorted(
+        list(product_orders) + list(wig_orders),
+        key=lambda o: o.created_at,
+        reverse=True
+    )
+
+    return render(request, 'my_orders.html', {'orders': orders})

@@ -292,17 +292,7 @@ if ('performance' in window) {
 /**
  * Service Worker Registration (if needed)
  */
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/sw.js')
-            .then(function(registration) {
-                console.log('SW registered: ', registration);
-            })
-            .catch(function(registrationError) {
-                console.log('SW registration failed: ', registrationError);
-            });
-    });
-}
+
 
 // Export functions for use in other modules (if using modules)
 if (typeof module !== 'undefined' && module.exports) {

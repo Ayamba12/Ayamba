@@ -76,8 +76,7 @@ class SubService(models.Model):
 
 
 class HairStyle(models.Model):
-    service = models.ForeignKey(Service, on_delete=models.CASCADE, related_name="hairstyles",
-                                limit_choices_to={'service_type': 'booking'})
+    service = models.ForeignKey(Service, on_delete=models.CASCADE, related_name="hairstyles", limit_choices_to={'service_type': 'booking'})                            
     name = models.CharField(max_length=100)
     description = models.TextField()
     image = models.ImageField(upload_to='hairstyles/')
@@ -253,16 +252,13 @@ class Appointment(models.Model):
 
     def clean(self):
         """Validate appointment data"""
-        from .utils import validate_appointment_time, check_time_conflict
-        
-        # Validate appointment time
+        from .utils import validate_appointment_time, check_time_conflict        
         if self.appointment_date:
             try:
                 validate_appointment_time(self.appointment_date)
             except ValidationError as e:
                 raise ValidationError({"appointment_date": str(e)})
 
-        # Check for time conflicts
         if (self.appointment_date and self.service and 
             self.service.is_booking_service and 
             self.status in ["pending", "confirmed"]):
@@ -359,6 +355,15 @@ class WigOrder(models.Model):
     )
     order_date = models.DateTimeField(auto_now_add=True)
 
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='wig_orders'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
     class Meta:
         ordering = ['-order_date']
         verbose_name = "Wig Order"
@@ -368,7 +373,6 @@ class WigOrder(models.Model):
         return f"{self.customer_name} - {self.wig.name} - {self.quantity}"
 
     def save(self, *args, **kwargs):
-        # Automatically calculate total price
         self.total_price = self.wig.price * self.quantity
         super().save(*args, **kwargs)
 
@@ -419,6 +423,16 @@ class ProductOrder(models.Model):
         choices=[('pending', 'Pending'), ('paid', 'Paid')],
         default='pending'
     )
+    
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='product_orders'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)  # if not already present
+
 
     order_date = models.DateTimeField(auto_now_add=True)
     subservice = models.ForeignKey(SubService, on_delete=models.SET_NULL, null=True, blank=True)
@@ -440,7 +454,6 @@ class ProductOrder(models.Model):
         """Cancel the order and restore stock"""
         if self.can_be_cancelled:
             self.payment_status = 'cancelled'
-            # Restore stock if this was a product order
             if self.subservice:
                 self.subservice.stock += self.quantity
                 self.subservice.save()

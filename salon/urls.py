@@ -6,6 +6,10 @@ from django.urls import reverse_lazy
 app_name = 'salon'
 
 urlpatterns = [
+    
+    #order views
+    path('my-orders/', views.my_orders, name='my_orders'),
+
     # Main pages
     path('', views.index, name='index'),
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),

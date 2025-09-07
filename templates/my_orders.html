@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Orders - Awinso Hair Care{% endblock %}
+
+{% block content %}
+<div class="container py-5 mt-4">
+    <h2 class="mb-4">My Orders</h2>
+
+    {% if orders %}
+        <div class="list-group">
+            {% for order in orders %}
+            <div class="list-group-item mb-3 shadow-sm">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        {% if order.wig %}
+                            <h5 class="mb-1">{{ order.wig.name }} (Wig)</h5>
+                        {% else %}
+                            <h5 class="mb-1">{{ order.subservice.name }} (Product)</h5>
+                        {% endif %}
+                        <p class="mb-1">Quantity: {{ order.quantity }} | Total: ${{ order.total_price }}</p>
+                        <p class="mb-0 text-muted">Status: {{ order.status|capfirst }}</p>
+                    </div>
+                    <div>
+                        {% if order.wig %}
+                            <a href="{% url 'salon:view_wig_order' order.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                        {% else %}
+                            <a href="{% url 'salon:view_order' order.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            You have no orders yet.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

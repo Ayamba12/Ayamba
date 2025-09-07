@@ -25,14 +25,6 @@
                         <p class="lead text-muted">{{ service.description }}</p>
                     </div>
 
-                    <!-- DEBUG: Show service info -->
-                    <div class="alert alert-info d-none"> <!-- Add d-none to hide after debugging -->
-                        <strong>Debug Info:</strong>
-                        Service: {{ service.name }} (ID: {{ service.id }})<br>
-                        Subservices: {{ subservices.count }}<br>
-                        Subservices exists: {% if subservices %}Yes{% else %}No{% endif %}
-                    </div>
-
                     <!-- Subservices Section -->
                     {% if subservices %}
                     <div class="subservices-section mb-5">
@@ -41,7 +33,6 @@
                             {% for subservice in subservices %}
                             <div class="col-md-6 mb-4">
                                 <div class="card h-100 shadow-sm border-0">
-                                    <!-- SubService Image -->
                                     {% if subservice.image %}
                                     <img src="{{ subservice.image.url }}" class="card-img-top" alt="{{ subservice.name }}" style="height: 200px; object-fit: cover;">
                                     {% else %}
@@ -54,31 +45,36 @@
                                         <h5 class="card-title fw-bold">{{ subservice.name }}</h5>
                                         <p class="card-text text-muted">{{ subservice.description }}</p>
                                         
-                                        <!-- Price + Duration for SubService -->
                                         <div class="subservice-details mb-3">
                                             <div class="d-inline-block mx-2">
                                                 <span class="fw-bold text-primary fs-5">${{ subservice.price }}</span>
                                                 <br>
                                                 <small class="text-muted">Price</small>
                                             </div>
-                                            
                                             <div class="d-inline-block mx-2">
                                                 <span class="fw-bold text-dark fs-6">{{ subservice.duration }}</span>
                                                 <br>
                                                 <small class="text-muted">Duration</small>
                                             </div>
                                         </div>
-                                        
+
                                         {% if user.is_authenticated %}
                                         <a href="{% url 'salon:book_appointment' service.id %}?subservice_id={{ subservice.id }}" 
                                            class="btn btn-outline-primary btn-sm">
                                            Select Option
                                         </a>
                                         {% else %}
-                                        <div class="alert alert-info py-1">
-                                            <small>Please <a href="{% url 'login' %}">login</a> to book</small>
+                                            <small>
+                                                Please 
+                                                <a href="{% url 'salon:login' %}?next={% url 'salon:book_appointment' service.id %}&subservice_id={{ subservice.id }}">
+                                                    login
+                                                </a> 
+                                                to book
+                                            </small>
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                         </div>
                                         {% endif %}
+
                                     </div>
                                 </div>
                             </div>
@@ -86,7 +82,6 @@
                         </div>
                     </div>
                     {% else %}
-                    <!-- Show this if no subservices -->
                     <div class="alert alert-warning text-center">
                         <h5>No Service Options Available</h5>
                         <p>There are no options currently available for this service.</p>
@@ -101,12 +96,17 @@
                     <!-- Book Service Button -->
                     <div class="text-center mt-4 mb-5">
                         {% if subservices %}
-                        <p class="text-muted mb-3">Select an option above to book</p>
+                            <p class="text-muted mb-3">Select an option above to book</p>
                         {% else %}
-                        <a href="{% url 'salon:book_appointment' service.id %}?subservice_id={{ subservice.id }}" 
-                            class="btn btn-primary btn-sm">
-                            <i class="fas fa-calendar-check me-1"></i> Book Appointment
-                        </a>
+                            {% if user.is_authenticated %}
+                            <a href="{% url 'salon:book_appointment' service.id %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-calendar-check me-1"></i> Book Appointment
+                            </a>
+                            {% else %}
+                            <div class="alert alert-info py-2">
+                                <small>Please <a href="{% url 'login' %}?next={% url 'salon:book_appointment' service.id %}">login</a> to book this service</small>
+                            </div>
+                            {% endif %}
                         {% endif %}
                     </div>
 

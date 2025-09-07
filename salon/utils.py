@@ -6,8 +6,12 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from datetime import timedelta
 import logging
+from django.core.mail.backends.base import BaseEmailBackend
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 
 logger = logging.getLogger(__name__)
+
 
 # Email Functions
 def send_appointment_request_notification(appointment):
@@ -292,3 +296,35 @@ def send_payment_confirmation_to_customer(appointment):
     except Exception as e:
         logger.error(f"Error sending payment confirmation email: {e}", exc_info=True)
         return False
+    
+class SendGridEmailBackend(BaseEmailBackend):
+    def __init__(self, fail_silently=False, **kwargs):
+        super().__init__(fail_silently=fail_silently, **kwargs)
+        self.sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
+
+    def send_messages(self, email_messages):
+        if not email_messages:
+            return 0
+        
+        success_count = 0
+        for email_message in email_messages:
+            try:
+                mail = Mail(
+                    from_email=email_message.from_email or settings.DEFAULT_FROM_EMAIL,
+                    to_emails=email_message.to,
+                    subject=email_message.subject,
+                    html_content=email_message.body
+                )
+                
+                response = self.sg.send(mail)
+                if response.status_code in [200, 202]:
+                    success_count += 1
+                else:
+                    logger.error(f"SendGrid API error: {response.status_code} - {response.body}")
+                    
+            except Exception as e:
+                logger.error(f"Error sending email via SendGrid: {e}")
+                if not self.fail_silently:
+                    raise
+        
+        return success_count

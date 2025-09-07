@@ -464,3 +464,30 @@ a:focus, button:focus, input:focus, select:focus, textarea:focus {
 .skip-link:focus {
     top: 0;
 }
+
+/* Admin Dashboard - Responsive Fixes */
+.dashboard-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.dashboard-card {
+    flex: 1 1 250px; /* Grow, shrink, min-width */
+    min-width: 220px; /* ensures cards don’t get too small */
+}
+
+.dashboard-card .btn {
+    width: 100%; /* Buttons fill card width on small screens */
+    margin-bottom: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .dashboard-row {
+        flex-direction: column;
+    }
+
+    .dashboard-card {
+        width: 100%;
+    }
+}
