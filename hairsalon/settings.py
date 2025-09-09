@@ -5,7 +5,9 @@ from decouple import config
 # Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
 # SECURITY
+SECRET_KEY = 'django-insecure-k_-12k4n4r#kyd41=vqd8v)(q$m_#3gpm&%d@)-e_s5(6wrvz='
 DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*').split(',')
 SENDGRID_API_KEY = config('SENDGRID_API_KEY')
